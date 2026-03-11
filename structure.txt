@@ -1,0 +1,10 @@
+DotsAndBoxes/
+├── main.py              # Điểm bắt đầu của ứng dụng
+├── constants.py         # Chứa màu sắc, kích thước, cấu hình game
+├── logic/
+│   ├── board.py         # Quản lý ma trận điểm, cạnh và ô vuông
+│   └── game_engine.py   # Điều phối lượt chơi, kiểm tra thắng/thua
+├── ui/
+│   ├── screen.py        # Vẽ giao diện (Pygame hoặc Tkinter)
+│   └── assets/          # Hình ảnh, âm thanh (nếu có)
+└── README.md            # Hướng dẫn sử dụng
