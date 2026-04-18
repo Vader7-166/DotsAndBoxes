@@ -4,6 +4,7 @@ import time
 from constants import *
 from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
+from ui.menu_ui import MenuRenderer
 
 class Screen:
     def __init__(self):
@@ -13,13 +14,17 @@ class Screen:
         self.clock = pygame.time.Clock()
         
         try:
-            self.title_font = pygame.font.SysFont("segoeui", 60, bold=True)
-            self.font = pygame.font.SysFont("segoeui", 36)
-            self.small_font = pygame.font.SysFont("segoeui", 24)
+            self.title_font = pygame.font.SysFont("segoeui", 72, bold=True)
+            self.font = pygame.font.SysFont("segoeui", 28, bold=True)
+            self.small_font = pygame.font.SysFont("segoeui", 20)
+            self.play_font = pygame.font.SysFont("segoeui", 48, bold=True)
+            self.label_font = pygame.font.SysFont("segoeui", 32, bold=True)
         except:
-            self.title_font = pygame.font.Font(None, 60)
-            self.font = pygame.font.Font(None, 36)
-            self.small_font = pygame.font.Font(None, 24)
+            self.title_font = pygame.font.Font(None, 72)
+            self.play_font = pygame.font.Font(None, 48)
+            self.label_font = pygame.font.Font(None, 32)
+            self.font = pygame.font.Font(None, 28)
+            self.small_font = pygame.font.Font(None, 20)
             
         self.engine = None
         self.bot = None
@@ -30,6 +35,9 @@ class Screen:
         self.board_size = (3, 3)
         self.is_quickplay = False
         
+        self.show_dropdown = False
+        self.show_help = False
+        
         self.margin_x = 0
         self.margin_y = 0
         self.square_size = SQUARE_SIZE
@@ -37,6 +45,14 @@ class Screen:
         self.mouse_pos = (0, 0)
         self.last_move = None
         self.hovered_edge = None
+
+        #Gọi UI
+        self.menu_renderer = MenuRenderer(self)
+
+    @property
+    def board_size_name(self):
+        mapping = {(3, 3): "Small", (5, 5): "Medium", (7, 7): "Large"}
+        return mapping.get(self.board_size, "Custom")
 
     def run(self):
         while True:
@@ -99,33 +115,71 @@ class Screen:
                     self.state = 'MAIN_MENU'
 
     def _handle_menu_click(self, x, y):
-        if WIDTH//2 - 120 <= x <= WIDTH//2 + 120 and HEIGHT//2 - 50 <= y <= HEIGHT//2 + 20:
+        if self.show_help:
+            # Click to close help
+            help_close_rect = pygame.Rect(WIDTH//2 - 30, 550, 60, 60)
+            if help_close_rect.collidepoint(x, y):
+                self.show_help = False
+            return
+
+        if self.show_dropdown:
+            options = ["Small", "Medium", "Large", "Custom"]
+            btn_start_x = 310
+            start_y = 510
+            for i, opt in enumerate(options):
+                rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+                if rect.collidepoint(x, y):
+                    if opt == "Small": self.board_size = (3, 3)
+                    elif opt == "Medium": self.board_size = (5, 5)
+                    elif opt == "Large": self.board_size = (7, 7)
+                    self.show_dropdown = False
+                    return
+            self.show_dropdown = False # Close if click outside
+            return
+
+        # Play Button
+        play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
+        if play_rect.collidepoint(x, y):
             self._start_game()
-        elif WIDTH//2 - 120 <= x <= WIDTH//2 + 120 and HEIGHT//2 + 40 <= y <= HEIGHT//2 + 110:
-            self.state = 'SETTINGS'
+            return
+
+        # Help Button
+        help_rect = pygame.Rect(WIDTH - 80, HEIGHT - 80, 60, 60)
+        if help_rect.collidepoint(x, y):
+            self.show_help = True
+            return
+
+        # Settings click areas
+        btn_start_x = 310
+        row_y = 305
+        spacing = 80
+
+        # Players
+        if row_y - 30 <= y <= row_y + 30:
+            if btn_start_x <= x <= btn_start_x + 90: self.mode = GameMode.PVE
+            elif btn_start_x + 100 <= x <= btn_start_x + 190: self.mode = GameMode.PVP
+        
+        # Difficulty
+        row_y += spacing
+        if self.mode == GameMode.PVE and row_y - 30 <= y <= row_y + 30:
+            if btn_start_x <= x <= btn_start_x + 90: self.difficulty = 'medium'
+            elif btn_start_x + 100 <= x <= btn_start_x + 190: self.difficulty = 'hard'
+
+        # Board Dropdown
+        row_y += spacing
+        board_rect = pygame.Rect(btn_start_x, row_y - 30, 190, 60)
+        if board_rect.collidepoint(x, y):
+            self.show_dropdown = not self.show_dropdown
+
+        # Quick Game
+        row_y += spacing
+        if row_y - 30 <= y <= row_y + 30:
+            if btn_start_x <= x <= btn_start_x + 90: self.is_quickplay = True
+            elif btn_start_x + 100 <= x <= btn_start_x + 190: self.is_quickplay = False
 
     def _handle_settings_click(self, x, y):
-        if 20 <= x <= 150 and HEIGHT - 80 <= y <= HEIGHT - 30:
-            self.state = 'MAIN_MENU'
-            
-        # Điều chỉnh vùng click cho Settings (màn hình rộng hơn)
-        if 220 <= y <= 270:
-            if 300 <= x <= 400: self.board_size = (3, 3)
-            elif 420 <= x <= 520: self.board_size = (5, 5)
-            elif 540 <= x <= 640: self.board_size = (7, 7)
-            
-        if 320 <= y <= 370:
-            if 300 <= x <= 450: self.mode = GameMode.PVP
-            elif 470 <= x <= 620: self.mode = GameMode.PVE
-            
-        if self.mode == GameMode.PVE and 420 <= y <= 470:
-            if 300 <= x <= 400: self.difficulty = 'easy'
-            elif 420 <= x <= 520: self.difficulty = 'medium'
-            elif 540 <= x <= 640: self.difficulty = 'hard'
-            
-        if 520 <= y <= 570:
-            if 300 <= x <= 450: self.is_quickplay = True
-            elif 470 <= x <= 620: self.is_quickplay = False
+        # Removed as settings are now in Main Menu
+        pass
 
     def _update(self):
         if self.state == 'IN_GAME':
@@ -199,9 +253,7 @@ class Screen:
         self.screen.fill(BG_COLOR)
         
         if self.state == 'MAIN_MENU':
-            self._draw_text("DOTS AND BOXES", WIDTH//2, HEIGHT//2 - 150, self.title_font, BLACK)
-            self._draw_button("START GAME", WIDTH//2 - 120, HEIGHT//2 - 50, 240, 70)
-            self._draw_button("SETTINGS", WIDTH//2 - 120, HEIGHT//2 + 40, 240, 70)
+            self.menu_renderer.draw()
             
         elif self.state == 'SETTINGS':
             self._draw_text("GAME SETTINGS", WIDTH//2, 80, self.title_font, BLACK)
