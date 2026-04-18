@@ -4,6 +4,7 @@ import time
 from constants import *
 from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
+from ui.audio_manager import AudioManager
 
 class Screen:
     def __init__(self):
@@ -11,6 +12,9 @@ class Screen:
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED)
         pygame.display.set_caption("Dots and Boxes")
         self.clock = pygame.time.Clock()
+        
+        self.audio_manager = AudioManager()
+        self.audio_manager.play_bgm()
         
         try:
             self.title_font = pygame.font.SysFont("segoeui", 60, bold=True)
@@ -37,6 +41,7 @@ class Screen:
         self.mouse_pos = (0, 0)
         self.last_move = None
         self.hovered_edge = None
+        self.show_help = False
 
     def run(self):
         while True:
@@ -74,7 +79,7 @@ class Screen:
         self.mouse_pos = pygame.mouse.get_pos()
         self.hovered_edge = None
         
-        if self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME:
+        if self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME and not self.show_help:
             self.hovered_edge = self._get_move_from_mouse(self.mouse_pos[0], self.mouse_pos[1])
             
         for event in pygame.event.get():
@@ -85,6 +90,24 @@ class Screen:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 
+                if self.show_help:
+                    self.show_help = False
+                    continue
+
+                # Handle Navigation Buttons (Quit/Help)
+                if self.state != 'SETTINGS':
+                    # Quit Button
+                    if NAV_MARGIN <= x <= NAV_MARGIN + NAV_BUTTON_WIDTH and \
+                       HEIGHT - NAV_BUTTON_HEIGHT - NAV_MARGIN <= y <= HEIGHT - NAV_MARGIN:
+                        pygame.quit()
+                        sys.exit()
+                    
+                    # Help Button
+                    if WIDTH - NAV_BUTTON_WIDTH - NAV_MARGIN <= x <= WIDTH - NAV_MARGIN and \
+                       HEIGHT - NAV_BUTTON_HEIGHT - NAV_MARGIN <= y <= HEIGHT - NAV_MARGIN:
+                        self.show_help = True
+                        continue
+
                 if self.state == 'MAIN_MENU':
                     self._handle_menu_click(x, y)
                 elif self.state == 'SETTINGS':
@@ -93,8 +116,13 @@ class Screen:
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
                         if move and move in self.engine.board.get_possible_moves():
-                            self.engine.make_move(move)
-                            self.last_move = move
+                            score = self.engine.make_move(move)
+                            if score is not None:
+                                self.last_move = move
+                                if score > 0:
+                                    self.audio_manager.play_sfx('score')
+                                else:
+                                    self.audio_manager.play_sfx('move')
                 elif self.state == 'GAME_OVER':
                     self.state = 'MAIN_MENU'
 
@@ -127,20 +155,34 @@ class Screen:
             if 300 <= x <= 450: self.is_quickplay = True
             elif 470 <= x <= 620: self.is_quickplay = False
 
+        # Audio Controls
+        if 620 <= y <= 670:
+            if 300 <= x <= 620: # Volume slider
+                new_volume = (x - 300) / 320
+                self.audio_manager.set_volume(new_volume)
+            elif 640 <= x <= 780: # Mute button
+                self.audio_manager.toggle_mute()
+
     def _update(self):
         if self.state == 'IN_GAME':
             self.engine.update()
             
             if self.engine.state in [GameState.PLAYER_1_WIN, GameState.PLAYER_2_WIN, GameState.DRAW]:
                 self.state = 'GAME_OVER'
+                self.audio_manager.play_sfx('gameover')
                 return
 
             if self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and self.engine.state == GameState.IN_GAME:
                 pygame.time.delay(600)
                 move = self.bot.get_move(self.engine.board)
                 if move:
-                    self.engine.make_move(move)
-                    self.last_move = move
+                    score = self.engine.make_move(move)
+                    if score is not None:
+                        self.last_move = move
+                        if score > 0:
+                            self.audio_manager.play_sfx('score')
+                        else:
+                            self.audio_manager.play_sfx('move')
 
     def _get_move_from_mouse(self, x, y):
         rows, cols = self.board_size
@@ -227,6 +269,14 @@ class Screen:
             self._draw_text("Quickplay", label_x, 545, self.font, align="left")
             self._draw_button("Enabled", 300, 520, 150, 50, self.is_quickplay)
             self._draw_button("Disabled", 470, 520, 150, 50, not self.is_quickplay)
+
+            # Audio Settings
+            audio_y = 620
+            self._draw_text("Volume", label_x, audio_y + 25, self.font, align="left")
+            self._draw_volume_slider(300, audio_y, 320, 50, self.audio_manager.volume)
+            
+            mute_text = "Muted" if self.audio_manager.is_muted else "Sound ON"
+            self._draw_button(mute_text, 640, audio_y, 140, 50, self.audio_manager.is_muted)
             
             self._draw_button("Back to Menu", 20, HEIGHT - 80, 200, 50)
             
@@ -235,6 +285,11 @@ class Screen:
         elif self.state == 'GAME_OVER':
             self._draw_board()
             self._draw_game_over()
+            
+        self._draw_navigation()
+        
+        if self.show_help:
+            self._draw_help_overlay()
             
         pygame.display.flip()
 
@@ -363,3 +418,52 @@ class Screen:
         
         self._draw_text(text, WIDTH // 2, HEIGHT // 2 - 20, self.title_font, color)
         self._draw_text("Click anywhere to return to Menu", WIDTH // 2, HEIGHT // 2 + 50, self.small_font, GRAY)
+
+    def _draw_navigation(self):
+        if self.state == 'SETTINGS':
+            return
+            
+        # Quit Button (Bottom Left)
+        self._draw_button("QUIT", NAV_MARGIN, HEIGHT - NAV_BUTTON_HEIGHT - NAV_MARGIN, 
+                          NAV_BUTTON_WIDTH, NAV_BUTTON_HEIGHT)
+        
+        # Help Button (Bottom Right)
+        self._draw_button("HELP", WIDTH - NAV_BUTTON_WIDTH - NAV_MARGIN, 
+                          HEIGHT - NAV_BUTTON_HEIGHT - NAV_MARGIN, 
+                          NAV_BUTTON_WIDTH, NAV_BUTTON_HEIGHT)
+
+    def _draw_help_overlay(self):
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(230)
+        overlay.fill(WHITE)
+        self.screen.blit(overlay, (0, 0))
+        
+        self._draw_text("HOW TO PLAY", WIDTH // 2, 150, self.title_font, BLACK)
+        
+        rules = [
+            "1. Players take turns clicking on grid edges to draw a line.",
+            "2. If you complete a 1x1 box, you score a point and get another turn.",
+            "3. The game ends when all edges are drawn.",
+            "4. The player with the most points wins!",
+            "",
+            "Controls:",
+            "- Click edges to place lines",
+            "- Use SETTINGS to change board size or mode",
+            "- Press anywhere to close this help screen"
+        ]
+        
+        for i, line in enumerate(rules):
+            self._draw_text(line, WIDTH // 2, 250 + i * 40, self.font, BLACK)
+            
+        self._draw_text("Click to Close", WIDTH // 2, HEIGHT - 100, self.small_font, GRAY)
+
+    def _draw_volume_slider(self, x, y, w, h, volume):
+        # Draw track
+        pygame.draw.rect(self.screen, GRAY, (x, y + h//2 - 2, w, 4))
+        
+        # Draw handle
+        handle_x = x + int(volume * w)
+        pygame.draw.circle(self.screen, BLACK, (handle_x, y + h//2), 10)
+        
+        if pygame.Rect(x, y, w, h).collidepoint(self.mouse_pos):
+            pygame.draw.circle(self.screen, HOVER_COLOR, (handle_x, y + h//2), 12, 2)

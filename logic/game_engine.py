@@ -56,7 +56,7 @@ class GameEngine:
 
     def make_move(self, move):
         if self.state != GameState.IN_GAME:
-            return False
+            return None
 
         score = self.board.make_move(move, self.current_player)
 
@@ -66,7 +66,7 @@ class GameEngine:
 
         self.turn_start_time = time.time() # Reset timer
         self._check_game_over()
-        return True
+        return score
 
     def _check_game_over(self):
         if self.board.is_game_over():
