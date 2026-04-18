@@ -7,7 +7,8 @@ class AudioManager:
         if not pygame.mixer.get_init():
             pygame.mixer.init()
             
-        self.volume = DEFAULT_VOLUME
+        self.bgm_volume = DEFAULT_VOLUME
+        self.sfx_volume = DEFAULT_VOLUME
         self.is_muted = MUTE_DEFAULT
         
         self.sfx = {}
@@ -55,18 +56,21 @@ class AudioManager:
     def play_sfx(self, name):
         if not self.is_muted and name in self.sfx:
             sound = self.sfx[name]
-            sound.set_volume(self.volume)
+            sound.set_volume(self.sfx_volume)
             sound.play()
 
-    def set_volume(self, volume):
-        self.volume = max(0.0, min(1.0, volume))
+    def set_bgm_volume(self, volume):
+        self.bgm_volume = max(0.0, min(1.0, volume))
         self._update_volume()
+
+    def set_sfx_volume(self, volume):
+        self.sfx_volume = max(0.0, min(1.0, volume))
 
     def toggle_mute(self):
         self.is_muted = not self.is_muted
         self._update_volume()
 
     def _update_volume(self):
-        actual_volume = 0.0 if self.is_muted else self.volume
+        actual_volume = 0.0 if self.is_muted else self.bgm_volume
         pygame.mixer.music.set_volume(actual_volume)
-        # SFX volume is set individually when played
+        # SFX volume is set individually when played in play_sfx

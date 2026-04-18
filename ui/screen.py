@@ -5,6 +5,7 @@ from constants import *
 from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
 from ui.audio_manager import AudioManager
+from ui.audio_settings_ui import AudioSettingsUI
 
 class Screen:
     def __init__(self):
@@ -15,6 +16,7 @@ class Screen:
         
         self.audio_manager = AudioManager()
         self.audio_manager.play_bgm()
+        self.audio_settings_ui = AudioSettingsUI(self, self.audio_manager)
         
         try:
             self.title_font = pygame.font.SysFont("segoeui", 60, bold=True)
@@ -95,12 +97,15 @@ class Screen:
                     continue
 
                 # Handle Navigation Buttons (Quit/Help)
-                if self.state != 'SETTINGS':
+                if self.state not in ['SETTINGS', 'AUDIO_SETTINGS']:
                     # Quit Button
                     if NAV_MARGIN <= x <= NAV_MARGIN + NAV_BUTTON_WIDTH and \
                        HEIGHT - NAV_BUTTON_HEIGHT - NAV_MARGIN <= y <= HEIGHT - NAV_MARGIN:
-                        pygame.quit()
-                        sys.exit()
+                        if self.state == 'IN_GAME' or self.state == 'GAME_OVER':
+                            self.state = 'MAIN_MENU'
+                        else:
+                            pygame.quit()
+                            sys.exit()
                     
                     # Help Button
                     if WIDTH - NAV_BUTTON_WIDTH - NAV_MARGIN <= x <= WIDTH - NAV_MARGIN and \
@@ -112,6 +117,8 @@ class Screen:
                     self._handle_menu_click(x, y)
                 elif self.state == 'SETTINGS':
                     self._handle_settings_click(x, y)
+                elif self.state == 'AUDIO_SETTINGS':
+                    self.audio_settings_ui.handle_click(x, y)
                 elif self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME:
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
@@ -133,7 +140,7 @@ class Screen:
             self.state = 'SETTINGS'
 
     def _handle_settings_click(self, x, y):
-        if 20 <= x <= 150 and HEIGHT - 80 <= y <= HEIGHT - 30:
+        if 20 <= x <= 220 and HEIGHT - 80 <= y <= HEIGHT - 30:
             self.state = 'MAIN_MENU'
             
         # Điều chỉnh vùng click cho Settings (màn hình rộng hơn)
@@ -155,13 +162,9 @@ class Screen:
             if 300 <= x <= 450: self.is_quickplay = True
             elif 470 <= x <= 620: self.is_quickplay = False
 
-        # Audio Controls
-        if 620 <= y <= 670:
-            if 300 <= x <= 620: # Volume slider
-                new_volume = (x - 300) / 320
-                self.audio_manager.set_volume(new_volume)
-            elif 640 <= x <= 780: # Mute button
-                self.audio_manager.toggle_mute()
+        # Audio Settings Button
+        if WIDTH//2 - 120 <= x <= WIDTH//2 + 120 and 620 <= y <= 680:
+            self.state = 'AUDIO_SETTINGS'
 
     def _update(self):
         if self.state == 'IN_GAME':
@@ -270,15 +273,11 @@ class Screen:
             self._draw_button("Enabled", 300, 520, 150, 50, self.is_quickplay)
             self._draw_button("Disabled", 470, 520, 150, 50, not self.is_quickplay)
 
-            # Audio Settings
-            audio_y = 620
-            self._draw_text("Volume", label_x, audio_y + 25, self.font, align="left")
-            self._draw_volume_slider(300, audio_y, 320, 50, self.audio_manager.volume)
-            
-            mute_text = "Muted" if self.audio_manager.is_muted else "Sound ON"
-            self._draw_button(mute_text, 640, audio_y, 140, 50, self.audio_manager.is_muted)
-            
+            self._draw_button("AUDIO SETTINGS", WIDTH//2 - 120, 620, 240, 60)
             self._draw_button("Back to Menu", 20, HEIGHT - 80, 200, 50)
+            
+        elif self.state == 'AUDIO_SETTINGS':
+            self.audio_settings_ui.draw()
             
         elif self.state == 'IN_GAME':
             self._draw_board()
@@ -420,7 +419,7 @@ class Screen:
         self._draw_text("Click anywhere to return to Menu", WIDTH // 2, HEIGHT // 2 + 50, self.small_font, GRAY)
 
     def _draw_navigation(self):
-        if self.state == 'SETTINGS':
+        if self.state in ['SETTINGS', 'AUDIO_SETTINGS']:
             return
             
         # Quit Button (Bottom Left)
@@ -456,14 +455,3 @@ class Screen:
             self._draw_text(line, WIDTH // 2, 250 + i * 40, self.font, BLACK)
             
         self._draw_text("Click to Close", WIDTH // 2, HEIGHT - 100, self.small_font, GRAY)
-
-    def _draw_volume_slider(self, x, y, w, h, volume):
-        # Draw track
-        pygame.draw.rect(self.screen, GRAY, (x, y + h//2 - 2, w, 4))
-        
-        # Draw handle
-        handle_x = x + int(volume * w)
-        pygame.draw.circle(self.screen, BLACK, (handle_x, y + h//2), 10)
-        
-        if pygame.Rect(x, y, w, h).collidepoint(self.mouse_pos):
-            pygame.draw.circle(self.screen, HOVER_COLOR, (handle_x, y + h//2), 12, 2)
