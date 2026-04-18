@@ -5,6 +5,7 @@ from constants import *
 from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
 from ui.menu_ui import MenuRenderer
+from ui.game_ui import GameRenderer
 
 class Screen:
     def __init__(self):
@@ -37,6 +38,7 @@ class Screen:
         
         self.show_dropdown = False
         self.show_help = False
+        self.sound_on = True
         
         self.margin_x = 0
         self.margin_y = 0
@@ -48,6 +50,7 @@ class Screen:
 
         #Gọi UI
         self.menu_renderer = MenuRenderer(self)
+        self.game_renderer = GameRenderer(self)
 
     @property
     def board_size_name(self):
@@ -106,6 +109,26 @@ class Screen:
                 elif self.state == 'SETTINGS':
                     self._handle_settings_click(x, y)
                 elif self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME:
+                    # Check bottom buttons first
+                    nav_y = HEIGHT - 60
+                    nav_center_x = WIDTH // 2
+                    
+                    # Speaker button (Bottom Left)
+                    if (x - 60)**2 + (y - nav_y)**2 <= 30**2:
+                        self.sound_on = not self.sound_on
+                        return
+                    
+                    # Home button
+                    elif (x - (nav_center_x - 80))**2 + (y - nav_y)**2 <= 30**2:
+                        self.state = 'MAIN_MENU'
+                        return
+                    elif (x - nav_center_x)**2 + (y - nav_y)**2 <= 30**2:
+                        self._start_game()
+                        return
+                    elif (x - (WIDTH - 60))**2 + (y - nav_y)**2 <= 30**2:
+                        self.show_help = True
+                        return
+
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
                         if move and move in self.engine.board.get_possible_moves():
@@ -134,7 +157,11 @@ class Screen:
                     elif opt == "Large": self.board_size = (7, 7)
                     self.show_dropdown = False
                     return
-            self.show_dropdown = False # Close if click outside
+            self.show_dropdown = False 
+
+        # Speaker Button (Bottom Left)
+        if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
+            self.sound_on = not self.sound_on
             return
 
         # Play Button
@@ -283,135 +310,19 @@ class Screen:
             self._draw_button("Back to Menu", 20, HEIGHT - 80, 200, 50)
             
         elif self.state == 'IN_GAME':
-            self._draw_board()
+            self.game_renderer.draw_board()
+            if self.show_help:
+                self.menu_renderer.draw_help_overlay()
         elif self.state == 'GAME_OVER':
-            self._draw_board()
-            self._draw_game_over()
+            self.game_renderer.draw_board()
+            self.game_renderer.draw_game_over()
             
         pygame.display.flip()
 
     def _draw_board(self):
-        board = self.engine.board
-        rows, cols = self.board_size
-        
-        pygame.draw.rect(self.screen, LIGHT_GRAY, (0, 0, WIDTH, 80))
-        pygame.draw.line(self.screen, GRAY, (0, 80), (WIDTH, 80), 2)
-        
-        p1_text = f"Player 1: {board.get_score(1)}"
-        p2_label = "Player 2" if self.mode == GameMode.PVP else "Bot"
-        p2_text = f"{p2_label}: {board.get_score(2)}"
-        
-        self._draw_text(p1_text, 150, 40, self.font, P1_COLOR)
-        self._draw_text(p2_text, WIDTH - 150, 40, self.font, P2_COLOR)
-
-        if self.engine.is_quickplay and self.engine.turn_start_time:
-            time_left = max(0, int(self.engine.turn_time_limit - (time.time() - self.engine.turn_start_time)))
-            color = RED if time_left <= 3 else BLACK
-            self._draw_text(f"00:{time_left:02d}", WIDTH // 2, 40, self.title_font, color)
-
-        for r in range(rows):
-            for c in range(cols):
-                owner = board.boxes[r][c]
-                if owner != 0:
-                    color = P1_LIGHT_COLOR if owner == 1 else P2_LIGHT_COLOR
-                    rect = pygame.Rect(
-                        self.margin_x + c * self.square_size,
-                        self.margin_y + r * self.square_size,
-                        self.square_size,
-                        self.square_size
-                    )
-                    pygame.draw.rect(self.screen, color, rect)
-
-        if self.hovered_edge and self.engine.current_player == 1:
-            d, r, c = self.hovered_edge
-            hover_color = P1_LIGHT_COLOR
-            if d == 'h':
-                pygame.draw.line(self.screen, hover_color,
-                    (self.margin_x + c * self.square_size + DOT_RADIUS, self.margin_y + r * self.square_size),
-                    (self.margin_x + (c + 1) * self.square_size - DOT_RADIUS, self.margin_y + r * self.square_size),
-                    HOVER_EDGE_WIDTH)
-            else:
-                pygame.draw.line(self.screen, hover_color,
-                    (self.margin_x + c * self.square_size, self.margin_y + r * self.square_size + DOT_RADIUS),
-                    (self.margin_x + c * self.square_size, self.margin_y + (r + 1) * self.square_size - DOT_RADIUS),
-                    HOVER_EDGE_WIDTH)
-
-        for r in range(rows + 1):
-            for c in range(cols):
-                if board.h_edges[r][c]:
-                    owner = board.h_edge_owners[r][c]
-                    color = P1_COLOR if owner == 1 else P2_COLOR
-                    width = EDGE_WIDTH
-                    
-                    if self.last_move == ('h', r, c):
-                        width = EDGE_WIDTH + 4
-                        color = BLACK
-                        
-                    pygame.draw.line(
-                        self.screen, color,
-                        (self.margin_x + c * self.square_size, self.margin_y + r * self.square_size),
-                        (self.margin_x + (c + 1) * self.square_size, self.margin_y + r * self.square_size),
-                        width
-                    )
-
-        for r in range(rows):
-            for c in range(cols + 1):
-                if board.v_edges[r][c]:
-                    owner = board.v_edge_owners[r][c]
-                    color = P1_COLOR if owner == 1 else P2_COLOR
-                    width = EDGE_WIDTH
-                    
-                    if self.last_move == ('v', r, c):
-                        width = EDGE_WIDTH + 4
-                        color = BLACK
-                        
-                    pygame.draw.line(
-                        self.screen, color,
-                        (self.margin_x + c * self.square_size, self.margin_y + r * self.square_size),
-                        (self.margin_x + c * self.square_size, self.margin_y + (r + 1) * self.square_size),
-                        width
-                    )
-
-        for r in range(rows + 1):
-            for c in range(cols + 1):
-                pygame.draw.circle(
-                    self.screen, BLACK,
-                    (self.margin_x + c * self.square_size, self.margin_y + r * self.square_size),
-                    DOT_RADIUS
-                )
-                pygame.draw.circle(
-                    self.screen, WHITE,
-                    (self.margin_x + c * self.square_size, self.margin_y + r * self.square_size),
-                    DOT_RADIUS // 2
-                )
-
-        turn_text = "Player 1's Turn" if self.engine.current_player == 1 else f"{p2_label}'s Turn"
-        turn_color = P1_COLOR if self.engine.current_player == 1 else P2_COLOR
-        
-        pygame.draw.rect(self.screen, LIGHT_GRAY, (0, HEIGHT - 60, WIDTH, 60))
-        pygame.draw.line(self.screen, GRAY, (0, HEIGHT - 60), (WIDTH, HEIGHT - 60), 2)
-        self._draw_text(turn_text, WIDTH // 2, HEIGHT - 30, self.font, turn_color)
+        # Drawing moved to GameRenderer
+        pass
 
     def _draw_game_over(self):
-        overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.set_alpha(180)
-        overlay.fill(WHITE)
-        self.screen.blit(overlay, (0, 0))
-        
-        if self.engine.state == GameState.PLAYER_1_WIN:
-            text = "Player 1 Wins!"
-            color = P1_COLOR
-        elif self.engine.state == GameState.PLAYER_2_WIN:
-            p2_label = "Player 2" if self.mode == GameMode.PVP else "Bot"
-            text = f"{p2_label} Wins!"
-            color = P2_COLOR
-        else:
-            text = "It's a Draw!"
-            color = BLACK
-            
-        panel_rect = pygame.Rect(WIDTH//2 - 250, HEIGHT//2 - 100, 500, 200)
-        pygame.draw.rect(self.screen, WHITE, panel_rect, border_radius=15)
-        pygame.draw.rect(self.screen, color, panel_rect, 4, border_radius=15)
-        
-        self._draw_text(text, WIDTH // 2, HEIGHT // 2 - 20, self.title_font, color)
-        self._draw_text("Click anywhere to return to Menu", WIDTH // 2, HEIGHT // 2 + 50, self.small_font, GRAY)
+        # Drawing moved to GameRenderer
+        pass

@@ -1,6 +1,6 @@
 import pygame
 from constants import *
-from ui.utils import draw_text, draw_pill_button, draw_logo
+from ui.utils import draw_text, draw_pill_button, draw_logo, draw_speaker
 from logic.game_engine import GameMode
 
 class MenuRenderer:
@@ -37,9 +37,10 @@ class MenuRenderer:
         draw_text(self.screen.screen, "", label_x + 5, row_y, self.screen.small_font, DARK_TEAL)
         pygame.draw.rect(self.screen.screen, RED, (btn_start_x, row_y - 30, 190, 60), border_radius=20)
         draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75, row_y, self.screen.font, WHITE)
-        # Vẽ mũi tên tam giác thay cho ký tự đặc biệt
-        arrow_points = [(btn_start_x + 160, row_y - 5), (btn_start_x + 175, row_y - 5), (btn_start_x + 167, row_y + 5)]
-        pygame.draw.polygon(self.screen.screen, WHITE, arrow_points)
+       
+        # # Vẽ mũi tên tam giác thay cho ký tự đặc biệt
+        # arrow_points = [(btn_start_x + 160, row_y - 5), (btn_start_x + 175, row_y - 5), (btn_start_x + 167, row_y + 5)]
+        # pygame.draw.polygon(self.screen.screen, WHITE, arrow_points)
         
         # Quick Game
         row_y += spacing
@@ -59,6 +60,9 @@ class MenuRenderer:
         help_rect = pygame.Rect(WIDTH - 80, HEIGHT - 80, 60, 60)
         pygame.draw.circle(self.screen.screen, CYAN, help_rect.center, 30)
         draw_text(self.screen.screen, "?", help_rect.centerx, help_rect.centery, self.screen.font, WHITE)
+
+        # Speaker Button (Bottom Left)
+        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on)
 
         if self.screen.show_dropdown:
             self.draw_dropdown()

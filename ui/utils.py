@@ -58,3 +58,22 @@ def draw_logo(surface, x, y, title_font):
         for d in range(5):
             dot_x = lx + d * (lw // 4)
             pygame.draw.circle(surface, WHITE, (dot_x, line_y), 6)
+            
+def draw_speaker(surface, x, y, sound_on):
+    color = CYAN
+    pygame.draw.circle(surface, color, (x, y), 30)
+    
+    # Draw Speaker Body
+    s_col = WHITE
+    pygame.draw.rect(surface, s_col, (x - 12, y - 6, 8, 12))
+    points = [(x - 4, y - 6), (x + 6, y - 14), (x + 6, y + 14), (x - 4, y + 6)]
+    pygame.draw.polygon(surface, s_col, points)
+    
+    if sound_on:
+        # Draw sound waves
+        for r in range(12, 18, 4):
+            pygame.draw.arc(surface, s_col, (x - r, y - r, r*2, r*2), -0.8, 0.8, 2)
+    else:
+        # Draw Mute X
+        pygame.draw.line(surface, s_col, (x + 10, y - 5), (x + 18, y + 5), 2)
+        pygame.draw.line(surface, s_col, (x + 18, y - 5), (x + 10, y + 5), 2)
