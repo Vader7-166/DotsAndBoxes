@@ -1,6 +1,6 @@
 import pygame
 from constants import *
-from ui.utils import draw_text, draw_pill_button, draw_logo, draw_speaker
+from ui.utils import draw_text, draw_pill_button, draw_logo, draw_speaker, draw_icon
 from logic.game_engine import GameMode
 
 class MenuRenderer:
@@ -15,39 +15,45 @@ class MenuRenderer:
         btn_start_x = 310
         row_y = 305
         spacing = 80
+        icon_x = label_x + 10
+        icon_y = row_y - 16
 
         # Players
         draw_text(self.screen.screen, "Players", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_text(self.screen.screen, "", label_x + 5, row_y, self.screen.small_font, DARK_TEAL)
-        draw_pill_button(self.screen.screen, "1P", btn_start_x, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVE)
-        draw_pill_button(self.screen.screen, "2P", btn_start_x + 100, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVP)
+        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        
+        draw_pill_button(self.screen.screen, "1P", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVE)
+        if "user" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["user"], btn_start_x + 65, row_y, center=True)
+            
+        draw_pill_button(self.screen.screen, "2P", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVP)
+        if "robot" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["robot"], btn_start_x + 165, row_y, center=True)
         
         # Difficulty
         row_y += spacing
         is_diff_disabled = (self.screen.mode == GameMode.PVP)
         diff_color = UI_DISABLED_GRAY if is_diff_disabled else DARK_TEAL
-        draw_text(self.screen.screen, "Difficulty", label_x - 10, row_y, self.screen.label_font, diff_color, align="right")
-        draw_text(self.screen.screen, "", label_x + 5, row_y, self.screen.small_font, diff_color)
-        draw_pill_button(self.screen.screen, "Normal", btn_start_x, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'medium', is_diff_disabled)
-        draw_pill_button(self.screen.screen, "Hard", btn_start_x + 100, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'hard', is_diff_disabled)
+        draw_text(self.screen.screen, "Difficulty", label_x - 10, row_y, self.screen.label_font, diff_color, align="right")        
+        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        draw_pill_button(self.screen.screen, "Normal", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'medium', is_diff_disabled)
+        draw_pill_button(self.screen.screen, "Hard", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'hard', is_diff_disabled)
         
         #  Board
         row_y += spacing
         draw_text(self.screen.screen, "Board", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_text(self.screen.screen, "", label_x + 5, row_y, self.screen.small_font, DARK_TEAL)
-        pygame.draw.rect(self.screen.screen, RED, (btn_start_x, row_y - 30, 190, 60), border_radius=20)
-        draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75, row_y, self.screen.font, WHITE)
-       
-        # # Vẽ mũi tên tam giác thay cho ký tự đặc biệt
-        # arrow_points = [(btn_start_x + 160, row_y - 5), (btn_start_x + 175, row_y - 5), (btn_start_x + 167, row_y + 5)]
-        # pygame.draw.polygon(self.screen.screen, WHITE, arrow_points)
+        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        pygame.draw.rect(self.screen.screen, RED, (btn_start_x + 20, row_y - 30, 190, 60), border_radius=20)
+        draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75 , row_y, self.screen.font, WHITE)
+        if "dropdown" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
         
         # Quick Game
         row_y += spacing
         draw_text(self.screen.screen, "Quick Game", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_text(self.screen.screen, "", label_x + 5, row_y, self.screen.small_font, DARK_TEAL)
-        draw_pill_button(self.screen.screen, "On", btn_start_x, row_y - 30, 90, 60, self.screen.font, self.screen.is_quickplay)
-        draw_pill_button(self.screen.screen, "Off", btn_start_x + 100, row_y - 30, 90, 60, self.screen.font, not self.screen.is_quickplay)
+        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        draw_pill_button(self.screen.screen, "On", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.is_quickplay)
+        draw_pill_button(self.screen.screen, "Off", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, not self.screen.is_quickplay)
         
         # PLAY Button
         play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
@@ -72,11 +78,11 @@ class MenuRenderer:
     
     def draw_dropdown(self):
         options = ["Small", "Medium", "Large", "Custom"]
-        start_y = 510
+        start_y = 500
         btn_start_x = 310
         
         for i, opt in enumerate(options):
-            rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+            rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
             pygame.draw.rect(self.screen.screen, RED, rect)
             pygame.draw.line(self.screen.screen, WHITE, (btn_start_x, rect.bottom), (btn_start_x + 190, rect.bottom), 1)
             draw_text(self.screen.screen, opt, btn_start_x + 95, rect.centery, self.screen.font, WHITE)
@@ -119,6 +125,9 @@ class MenuRenderer:
         draw_text(self.screen.screen, "Tip: Try Quick Game to get to the", WIDTH//2, box_y + 90, self.screen.small_font, DARK_TEAL)
         draw_text(self.screen.screen, "scoring sooner.", WIDTH//2, box_y + 115, self.screen.small_font, DARK_TEAL)
         
-        close_y = 580
+        close_y = 600
         pygame.draw.circle(self.screen.screen, CYAN, (WIDTH//2, close_y), 30)
-        draw_text(self.screen.screen, "✕", WIDTH//2, close_y, self.screen.font, WHITE)
+        if "close" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["close"], WIDTH//2, close_y, center=True)
+        else:
+            draw_text(self.screen.screen, "✕", WIDTH//2, close_y, self.screen.font, WHITE)

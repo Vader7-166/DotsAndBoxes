@@ -77,3 +77,7 @@ def draw_speaker(surface, x, y, sound_on):
         # Draw Mute X
         pygame.draw.line(surface, s_col, (x + 10, y - 5), (x + 18, y + 5), 2)
         pygame.draw.line(surface, s_col, (x + 18, y - 5), (x + 10, y + 5), 2)
+
+def draw_icon(surface, icon, x, y, center=True):
+    rect = icon.get_rect(center=(x, y)) if center else (x, y)
+    surface.blit(icon, rect)

@@ -1,7 +1,7 @@
 import pygame
 import time
 from constants import *
-from ui.utils import draw_text, draw_speaker
+from ui.utils import draw_text, draw_speaker, draw_icon
 from logic.game_engine import GameState, GameMode
 
 class GameRenderer:
@@ -17,8 +17,11 @@ class GameRenderer:
         pygame.draw.circle(self.screen.screen, CYAN, p1_center, 40)
         if self.screen.engine.current_player == 1:
             pygame.draw.circle(self.screen.screen, WHITE, p1_center, 45, 3)
-        # Use text instead of emojis to fix rendering issues
-        draw_text(self.screen.screen, "P1", p1_center[0], p1_center[1], self.screen.font, WHITE)
+        
+        if "user" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["user"], p1_center[0], p1_center[1], center=True)
+        else:
+            draw_text(self.screen.screen, "P1", p1_center[0], p1_center[1], self.screen.font, WHITE)
         
         pygame.draw.circle(self.screen.screen, WHITE, (120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(1)), 120, 60, self.screen.font, DARK_TEAL)
@@ -27,8 +30,13 @@ class GameRenderer:
         pygame.draw.circle(self.screen.screen, RED, p2_center, 40)
         if self.screen.engine.current_player == 2:
             pygame.draw.circle(self.screen.screen, WHITE, p2_center, 45, 3)
-        p2_label_icon = "P2" if self.screen.mode == GameMode.PVP else "AI"
-        draw_text(self.screen.screen, p2_label_icon, p2_center[0], p2_center[1], self.screen.font, WHITE)
+            
+        p2_icon_key = "user" if self.screen.mode == GameMode.PVP else "robot"
+        if p2_icon_key in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons[p2_icon_key], p2_center[0], p2_center[1], center=True)
+        else:
+            p2_label_icon = "P2" if self.screen.mode == GameMode.PVP else "AI"
+            draw_text(self.screen.screen, p2_label_icon, p2_center[0], p2_center[1], self.screen.font, WHITE)
         
         pygame.draw.circle(self.screen.screen, WHITE, (WIDTH - 120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(2)), WIDTH - 120, 60, self.screen.font, DARK_TEAL)
@@ -106,12 +114,18 @@ class GameRenderer:
         nav_y = HEIGHT - 60
         
         # Home button
-        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x - 80, nav_y), 30)
-        draw_text(self.screen.screen, "H", nav_center_x - 80, nav_y, self.screen.font, WHITE)
+        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x - 55, nav_y), 42)
+        if "home" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["home"], nav_center_x - 55, nav_y, center=True)
+        else:
+            draw_text(self.screen.screen, "H", nav_center_x - 55, nav_y, self.screen.font, WHITE)
         
         # Restart button
-        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x, nav_y), 30)
-        draw_text(self.screen.screen, "R", nav_center_x, nav_y, self.screen.font, WHITE)
+        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x + 55, nav_y), 42)
+        if "restart" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["restart"], nav_center_x + 55, nav_y, center=True)
+        else:
+            draw_text(self.screen.screen, "R", nav_center_x + 55, nav_y, self.screen.font, WHITE)
         
         # Help button
         pygame.draw.circle(self.screen.screen, CYAN, (WIDTH - 60, nav_y), 30)
