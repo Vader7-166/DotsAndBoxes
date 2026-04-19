@@ -121,10 +121,12 @@ class Screen:
                     if (x - 60)**2 + (y - nav_y)**2 <= 30**2:
                         self.sound_on = not self.sound_on
                         return
-                    elif (x - (nav_center_x - 80))**2 + (y - nav_y)**2 <= 30**2:
+                    # Home button
+                    elif (x - (nav_center_x - 55))**2 + (y - nav_y)**2 <= 42**2:
                         self.state = 'MAIN_MENU'
                         return
-                    elif (x - nav_center_x)**2 + (y - nav_y)**2 <= 30**2:
+                    # Restart button
+                    elif (x - (nav_center_x + 55))**2 + (y - nav_y)**2 <= 42**2:
                         self._start_game()
                         return
                     elif (x - (WIDTH - 60))**2 + (y - nav_y)**2 <= 30**2:

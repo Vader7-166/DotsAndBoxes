@@ -16,7 +16,8 @@ class GameRenderer:
         p1_center = (60, 60)
         pygame.draw.circle(self.screen.screen, CYAN, p1_center, 40)
         if self.screen.engine.current_player == 1:
-            pygame.draw.circle(self.screen.screen, WHITE, p1_center, 45, 3)
+            # Active indicator: Thick CYAN ring
+            pygame.draw.circle(self.screen.screen, CYAN, p1_center, 48, 5)
         
         if "user" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["user"], p1_center[0], p1_center[1], center=True)
@@ -29,7 +30,8 @@ class GameRenderer:
         p2_center = (WIDTH - 60, 60)
         pygame.draw.circle(self.screen.screen, RED, p2_center, 40)
         if self.screen.engine.current_player == 2:
-            pygame.draw.circle(self.screen.screen, WHITE, p2_center, 45, 3)
+            # Active indicator: Thick RED ring
+            pygame.draw.circle(self.screen.screen, RED, p2_center, 48, 5)
             
         p2_icon_key = "user" if self.screen.mode == GameMode.PVP else "robot"
         if p2_icon_key in self.screen.icons:
