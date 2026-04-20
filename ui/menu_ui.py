@@ -59,12 +59,12 @@ class MenuRenderer:
         draw_pill_button(self.screen.screen, "On", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.is_quickplay)
         draw_pill_button(self.screen.screen, "Off", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, not self.screen.is_quickplay)
         
-        # PLAY Button
+        # SAVE Button
         play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
         pygame.draw.rect(self.screen.screen, (220, 240, 240), (play_rect.x+2, play_rect.y+8, play_rect.w, play_rect.h), border_radius=25)
         pygame.draw.rect(self.screen.screen, RED, (play_rect.x, play_rect.y+4, play_rect.w, play_rect.h), border_radius=25)
         pygame.draw.rect(self.screen.screen, WHITE, play_rect, border_radius=25)
-        draw_text(self.screen.screen, "PLAY", WIDTH//2, 710, self.screen.play_font, RED)
+        draw_text(self.screen.screen, "SAVE", WIDTH//2, 710, self.screen.play_font, RED)
         
         # Help Button
         help_rect = pygame.Rect(WIDTH - 80, HEIGHT - 80, 60, 60)
@@ -110,7 +110,8 @@ class MenuRenderer:
         overlay.fill((50, 80, 80))
         self.screen.screen.blit(overlay, (0, 0))
         
-        panel_rect = pygame.Rect(WIDTH//2 - 180, 200, 360, 420)
+        #Kích thước của panel hiện lên
+        panel_rect = pygame.Rect(WIDTH//2 - 180, 200, 360, 480)
         pygame.draw.rect(self.screen.screen, BG_COLOR, panel_rect, border_radius=20)
         
         help_text = [
@@ -142,7 +143,8 @@ class MenuRenderer:
         draw_text(self.screen.screen, "Tip: Try Quick Game to get to the", WIDTH//2, box_y + 90, self.screen.small_font, DARK_TEAL)
         draw_text(self.screen.screen, "scoring sooner.", WIDTH//2, box_y + 115, self.screen.small_font, DARK_TEAL)
         
-        close_y = 600
+        #Nút đóng X
+        close_y = 620
         pygame.draw.circle(self.screen.screen, CYAN, (WIDTH//2, close_y), 30)
         if "close" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["close"], WIDTH//2, close_y, center=True)

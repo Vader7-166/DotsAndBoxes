@@ -117,17 +117,11 @@ class GameRenderer:
         
         # Home button
         pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x - 55, nav_y), 42)
-        if "home" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["home"], nav_center_x - 55, nav_y, center=True)
-        else:
-            draw_text(self.screen.screen, "H", nav_center_x - 55, nav_y, self.screen.font, WHITE)
+        draw_icon(self.screen.screen, self.screen.icons["home"], nav_center_x - 55, nav_y, center=True)
         
         # Restart button
         pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x + 55, nav_y), 42)
-        if "restart" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["restart"], nav_center_x + 55, nav_y, center=True)
-        else:
-            draw_text(self.screen.screen, "R", nav_center_x + 55, nav_y, self.screen.font, WHITE)
+        draw_icon(self.screen.screen, self.screen.icons["restart"], nav_center_x + 55, nav_y, center=True)
         
         # Help button
         pygame.draw.circle(self.screen.screen, CYAN, (WIDTH - 60, nav_y), 30)

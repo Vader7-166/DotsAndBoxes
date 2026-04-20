@@ -6,6 +6,7 @@ from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
 from ui.menu_ui import MenuRenderer
 from ui.game_ui import GameRenderer
+from ui.start_ui import StartRenderer
 
 class Screen:
     def __init__(self):
@@ -32,7 +33,7 @@ class Screen:
             
         self.engine = None
         self.bot = None
-        self.state = 'MAIN_MENU'
+        self.state = 'START_SCREEN'
         
         self.mode = GameMode.PVE
         self.difficulty = 'medium'
@@ -55,6 +56,7 @@ class Screen:
         #Gọi UI
         self.menu_renderer = MenuRenderer(self)
         self.game_renderer = GameRenderer(self)
+        self.start_renderer = StartRenderer(self)
 
     def _load_icons(self):
         icon_path = "ui/icon/"
@@ -114,40 +116,61 @@ class Screen:
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
-                if self.state == 'MAIN_MENU':
+                
+                # Global Help Overlay Close
+                if self.show_help:
+                    # Match close_y = 620 (620 - 30 = 590)
+                    help_close_rect = pygame.Rect(WIDTH//2 - 30, 590, 60, 60)
+                    if help_close_rect.collidepoint(x, y):
+                        self.show_help = False
+                    return
+                    
+                # Start screen
+                if self.state == 'START_SCREEN':
+                    # Sound button
+                    if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
+                        self.sound_on = not self.sound_on
+                        return
+                    # Start game button
+                    if self.start_renderer.start_game_rect.collidepoint(x, y):
+                        self._start_game()
+                    elif self.start_renderer.settings_rect.collidepoint(x, y):
+                        self.state = 'MAIN_MENU'
+                    elif self.start_renderer.exit_rect.collidepoint(x, y):
+                        pygame.quit()
+                        sys.exit()
+                elif self.state == 'MAIN_MENU':
                     self._handle_menu_click(x, y)
                 elif self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME:
                     nav_y = HEIGHT - 60
                     nav_center_x = WIDTH // 2
+                    # Sound button
                     if (x - 60)**2 + (y - nav_y)**2 <= 30**2:
                         self.sound_on = not self.sound_on
                         return
                     # Home button
                     elif (x - (nav_center_x - 55))**2 + (y - nav_y)**2 <= 42**2:
-                        self.state = 'MAIN_MENU'
+                        self.state = 'START_SCREEN'
                         return
                     # Restart button
                     elif (x - (nav_center_x + 55))**2 + (y - nav_y)**2 <= 42**2:
                         self._start_game()
                         return
+                    # Help button
                     elif (x - (WIDTH - 60))**2 + (y - nav_y)**2 <= 30**2:
                         self.show_help = True
                         return
+                    # Game area
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
                         if move and move in self.engine.board.get_possible_moves():
                             self.engine.make_move(move)
                             self.last_move = move
+                # Game over screen
                 elif self.state == 'GAME_OVER':
-                    self.state = 'MAIN_MENU'
+                    self.state = 'START_SCREEN'
 
     def _handle_menu_click(self, x, y):
-        if self.show_help:
-            help_close_rect = pygame.Rect(WIDTH//2 - 30, 550, 60, 60)
-            if help_close_rect.collidepoint(x, y):
-                self.show_help = False
-            return
-
         # Handle Board Dropdown options
         if self.show_dropdown:
             options = ["Small", "Medium", "Large"]
@@ -184,7 +207,7 @@ class Screen:
             return
         play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
         if play_rect.collidepoint(x, y):
-            self._start_game()
+            self.state = 'START_SCREEN'
             return
         help_rect = pygame.Rect(WIDTH - 80, HEIGHT - 80, 60, 60)
         if help_rect.collidepoint(x, y):
@@ -276,7 +299,9 @@ class Screen:
 
     def _draw(self):
         self.screen.fill(BG_COLOR)
-        if self.state == 'MAIN_MENU':
+        if self.state == 'START_SCREEN':
+            self.start_renderer.draw()
+        elif self.state == 'MAIN_MENU':
             self.menu_renderer.draw()
         elif self.state == 'IN_GAME':
             self.game_renderer.draw_board()
