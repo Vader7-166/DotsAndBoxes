@@ -66,6 +66,7 @@ class Screen:
                 "dropdown": pygame.transform.smoothscale(pygame.image.load(icon_path + "muitenxuong.png").convert_alpha(), (30, 25)),
                 "close": pygame.transform.smoothscale(pygame.image.load(icon_path + "dauX.png").convert_alpha(), (30, 30)),
                 "user": pygame.transform.smoothscale(pygame.image.load(icon_path + "nguoi.png").convert_alpha(), (50, 50)),
+                "user2": pygame.transform.smoothscale(pygame.image.load(icon_path + "nguoi2.png").convert_alpha(), (50, 50)),
                 "robot": pygame.transform.smoothscale(pygame.image.load(icon_path + "bot.png").convert_alpha(), (50, 50)),
                 "home": pygame.transform.smoothscale(pygame.image.load(icon_path + "home.png").convert_alpha(), (40, 40)),
                 "restart": pygame.transform.smoothscale(pygame.image.load(icon_path + "reload.png").convert_alpha(), (40, 40)),

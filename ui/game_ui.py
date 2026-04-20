@@ -34,7 +34,7 @@ class GameRenderer:
             # Active indicator: Thick RED ring
             pygame.draw.circle(self.screen.screen, RED, p2_center, 48, 5)
             
-        p2_icon_key = "user" if self.screen.mode == GameMode.PVP else "robot"
+        p2_icon_key = "user2" if self.screen.mode == GameMode.PVP else "robot"
         if p2_icon_key in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons[p2_icon_key], p2_center[0], p2_center[1], center=True)
         else:
@@ -85,13 +85,23 @@ class GameRenderer:
                     owner = board.h_edge_owners[r][c]
                     color = P1_COLOR if owner == 1 else P2_COLOR
                     # Highlight last move
-                    width = EDGE_WIDTH + 5 if self.screen.last_move == ('h', r, c) else EDGE_WIDTH
-                    pygame.draw.line(
-                        self.screen.screen, color,
-                        (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
-                        (self.screen.margin_x + (c + 1) * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
-                        width
-                    )
+                    is_last = self.screen.last_move == ('h', r, c)
+                    
+                    s = self.screen.square_size
+                    x1 = self.screen.margin_x + c * s
+                    x2 = x1 + s
+                    y = self.screen.margin_y + r * s
+                    
+                    # Bone shape parameters
+                    flare = 20 if is_last else 18
+                    mid = 17 if is_last else 15
+                    gap = DOT_RADIUS - 2
+                    
+                    points = [
+                        (x1 + gap, y - flare//2), (x1 + s//2, y - mid//2), (x2 - gap, y - flare//2),
+                        (x2 - gap, y + flare//2), (x1 + s//2, y + mid//2), (x1 + gap, y + flare//2)
+                    ]
+                    pygame.draw.polygon(self.screen.screen, color, points)
 
         for r in range(rows):
             for c in range(cols + 1):
@@ -99,13 +109,23 @@ class GameRenderer:
                     owner = board.v_edge_owners[r][c]
                     color = P1_COLOR if owner == 1 else P2_COLOR
                     # Highlight last move
-                    width = EDGE_WIDTH + 4 if self.screen.last_move == ('v', r, c) else EDGE_WIDTH
-                    pygame.draw.line(
-                        self.screen.screen, color,
-                        (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
-                        (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size),
-                        width
-                    )
+                    is_last = self.screen.last_move == ('v', r, c)
+                    
+                    s = self.screen.square_size
+                    x = self.screen.margin_x + c * s
+                    y1 = self.screen.margin_y + r * s
+                    y2 = y1 + s
+                    
+                    # Bone shape parameters
+                    flare = 20 if is_last else 16
+                    mid = 16 if is_last else 13
+                    gap = DOT_RADIUS - 1
+                    
+                    points = [
+                        (x - flare//2, y1 + gap), (x - mid//2, y1 + s//2), (x - flare//2, y2 - gap),
+                        (x + flare//2, y2 - gap), (x + mid//2, y1 + s//2), (x + flare//2, y1 + gap)
+                    ]
+                    pygame.draw.polygon(self.screen.screen, color, points)
 
         # Dots
         for r in range(rows + 1):

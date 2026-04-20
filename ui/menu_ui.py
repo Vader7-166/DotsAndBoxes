@@ -22,13 +22,8 @@ class MenuRenderer:
         draw_text(self.screen.screen, "Players", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
-        draw_pill_button(self.screen.screen, "1P", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVE)
-        if "user" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["user"], btn_start_x + 65, row_y, center=True)
-            
-        draw_pill_button(self.screen.screen, "2P", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVP)
-        if "robot" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["robot"], btn_start_x + 165, row_y, center=True)
+        draw_pill_button(self.screen.screen, "PVE", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVE)
+        draw_pill_button(self.screen.screen, "PVP", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVP)
         
         # Difficulty
         row_y += spacing
