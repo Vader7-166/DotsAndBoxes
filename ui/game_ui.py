@@ -1,3 +1,4 @@
+from constants import P2_LIGHT_COLOR
 import pygame
 import time
 from constants import *
@@ -23,8 +24,8 @@ class GameRenderer:
             draw_icon(self.screen.screen, self.screen.icons["user"], p1_center[0], p1_center[1], center=True)
         else:
             draw_text(self.screen.screen, "P1", p1_center[0], p1_center[1], self.screen.font, WHITE)
-        
-        pygame.draw.circle(self.screen.screen, (175, 238, 238), (120, 60), 25)
+        # Score P1
+        pygame.draw.circle(self.screen.screen, P1_LIGHT_COLOR, (120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(1)), 120, 60, self.screen.font, DARK_TEAL)
         
         p2_center = (WIDTH - 60, 60)
@@ -39,8 +40,8 @@ class GameRenderer:
         else:
             p2_label_icon = "P2" if self.screen.mode == GameMode.PVP else "AI"
             draw_text(self.screen.screen, p2_label_icon, p2_center[0], p2_center[1], self.screen.font, WHITE)
-        
-        pygame.draw.circle(self.screen.screen, (255, 193, 193), (WIDTH - 120, 60), 25)
+        # Score P2
+        pygame.draw.circle(self.screen.screen, P2_LIGHT_COLOR, (WIDTH - 120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(2)), WIDTH - 120, 60, self.screen.font, DARK_TEAL)
 
         if self.screen.engine.is_quickplay and self.screen.engine.turn_start_time:
@@ -83,11 +84,13 @@ class GameRenderer:
                 if board.h_edges[r][c]:
                     owner = board.h_edge_owners[r][c]
                     color = P1_COLOR if owner == 1 else P2_COLOR
+                    # Highlight last move
+                    width = EDGE_WIDTH + 5 if self.screen.last_move == ('h', r, c) else EDGE_WIDTH
                     pygame.draw.line(
                         self.screen.screen, color,
                         (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
                         (self.screen.margin_x + (c + 1) * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
-                        EDGE_WIDTH
+                        width
                     )
 
         for r in range(rows):
@@ -95,11 +98,13 @@ class GameRenderer:
                 if board.v_edges[r][c]:
                     owner = board.v_edge_owners[r][c]
                     color = P1_COLOR if owner == 1 else P2_COLOR
+                    # Highlight last move
+                    width = EDGE_WIDTH + 4 if self.screen.last_move == ('v', r, c) else EDGE_WIDTH
                     pygame.draw.line(
                         self.screen.screen, color,
                         (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size),
                         (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size),
-                        EDGE_WIDTH
+                        width
                     )
 
         # Dots
