@@ -40,6 +40,7 @@ class Screen:
         self.is_quickplay = False
         
         self.show_dropdown = False
+        self.show_diff_dropdown = False
         self.show_help = False
         self.sound_on = True
         
@@ -146,8 +147,10 @@ class Screen:
             if help_close_rect.collidepoint(x, y):
                 self.show_help = False
             return
+
+        # Handle Board Dropdown options
         if self.show_dropdown:
-            options = ["Small", "Medium", "Large", "Custom"]
+            options = ["Small", "Medium", "Large"]
             btn_start_x = 310
             start_y = 510
             for i, opt in enumerate(options):
@@ -159,6 +162,23 @@ class Screen:
                     self.show_dropdown = False
                     return
             self.show_dropdown = False 
+            return
+
+        # Handle Difficulty Dropdown options
+        if self.show_diff_dropdown:
+            options = ["Easy", "Medium", "Hard"]
+            btn_start_x = 310
+            start_y = 430
+            for i, opt in enumerate(options):
+                rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+                if rect.collidepoint(x, y):
+                    self.difficulty = opt.lower()
+                    self.show_diff_dropdown = False
+                    return
+            self.show_diff_dropdown = False 
+            return
+
+        # Handle Bottom UI
         if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
             self.sound_on = not self.sound_on
             return
@@ -170,20 +190,35 @@ class Screen:
         if help_rect.collidepoint(x, y):
             self.show_help = True
             return
+
+        # Handle Settings Rows
         btn_start_x = 310
         row_y = 305
         spacing = 80
+
+        # Players
         if row_y - 30 <= y <= row_y + 30:
             if btn_start_x <= x <= btn_start_x + 90: self.mode = GameMode.PVE
             elif btn_start_x + 100 <= x <= btn_start_x + 190: self.mode = GameMode.PVP
+        
+        # Difficulty Dropdown
         row_y += spacing
-        if self.mode == GameMode.PVE and row_y - 30 <= y <= row_y + 30:
-            if btn_start_x <= x <= btn_start_x + 90: self.difficulty = 'medium'
-            elif btn_start_x + 100 <= x <= btn_start_x + 190: self.difficulty = 'hard'
+        if self.mode == GameMode.PVE:
+            diff_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
+            if diff_rect.collidepoint(x, y):
+                self.show_diff_dropdown = not self.show_diff_dropdown
+                self.show_dropdown = False # Close other dropdown
+                return
+
+        # Board Dropdown
         row_y += spacing
-        board_rect = pygame.Rect(btn_start_x, row_y - 30, 190, 60)
+        board_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
         if board_rect.collidepoint(x, y):
             self.show_dropdown = not self.show_dropdown
+            self.show_diff_dropdown = False # Close other dropdown
+            return
+
+        # Quick Game
         row_y += spacing
         if row_y - 30 <= y <= row_y + 30:
             if btn_start_x <= x <= btn_start_x + 90: self.is_quickplay = True

@@ -24,7 +24,7 @@ class GameRenderer:
         else:
             draw_text(self.screen.screen, "P1", p1_center[0], p1_center[1], self.screen.font, WHITE)
         
-        pygame.draw.circle(self.screen.screen, WHITE, (120, 60), 25)
+        pygame.draw.circle(self.screen.screen, (175, 238, 238), (120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(1)), 120, 60, self.screen.font, DARK_TEAL)
         
         p2_center = (WIDTH - 60, 60)
@@ -40,7 +40,7 @@ class GameRenderer:
             p2_label_icon = "P2" if self.screen.mode == GameMode.PVP else "AI"
             draw_text(self.screen.screen, p2_label_icon, p2_center[0], p2_center[1], self.screen.font, WHITE)
         
-        pygame.draw.circle(self.screen.screen, WHITE, (WIDTH - 120, 60), 25)
+        pygame.draw.circle(self.screen.screen, (255, 193, 193), (WIDTH - 120, 60), 25)
         draw_text(self.screen.screen, str(board.get_score(2)), WIDTH - 120, 60, self.screen.font, DARK_TEAL)
 
         if self.screen.engine.is_quickplay and self.screen.engine.turn_start_time:

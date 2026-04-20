@@ -36,8 +36,12 @@ class MenuRenderer:
         diff_color = UI_DISABLED_GRAY if is_diff_disabled else DARK_TEAL
         draw_text(self.screen.screen, "Difficulty", label_x - 10, row_y, self.screen.label_font, diff_color, align="right")        
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
-        draw_pill_button(self.screen.screen, "Normal", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'medium', is_diff_disabled)
-        draw_pill_button(self.screen.screen, "Hard", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.difficulty == 'hard', is_diff_disabled)
+        
+        diff_bg = UI_DISABLED_GRAY if is_diff_disabled else RED
+        pygame.draw.rect(self.screen.screen, diff_bg, (btn_start_x + 20, row_y - 30, 190, 60), border_radius=20)
+        draw_text(self.screen.screen, self.screen.difficulty.capitalize(), btn_start_x + 75 + 20, row_y, self.screen.font, WHITE)
+        if "dropdown" in self.screen.icons:
+            draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
         
         #  Board
         row_y += spacing
@@ -73,9 +77,22 @@ class MenuRenderer:
         if self.screen.show_dropdown:
             self.draw_dropdown()
         
+        if self.screen.show_diff_dropdown:
+            self.draw_diff_dropdown()
+        
         if self.screen.show_help:
             self.draw_help_overlay()
-    
+    # Dropdown của Difficulty
+    def draw_diff_dropdown(self):
+        options = ["Easy", "Medium", "Hard"]
+        start_y = 430
+        btn_start_x = 310
+        for i, opt in enumerate(options):
+            rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
+            pygame.draw.rect(self.screen.screen, RED, rect)
+            pygame.draw.line(self.screen.screen, WHITE, (btn_start_x + 20, rect.bottom), (btn_start_x + 210, rect.bottom), 1)
+            draw_text(self.screen.screen, opt, btn_start_x + 95 + 20, rect.centery, self.screen.font, WHITE)
+    # Dropdown của Board
     def draw_dropdown(self):
         options = ["Small", "Medium", "Large", "Custom"]
         start_y = 500
