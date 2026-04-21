@@ -69,13 +69,13 @@ class GameRenderer:
             hover_color = P1_LIGHT_COLOR
             if d == 'h':
                 pygame.draw.line(self.screen.screen, hover_color,
-                    (self.screen.margin_x + c * self.screen.square_size + DOT_RADIUS, self.screen.margin_y + r * self.screen.square_size),
-                    (self.screen.margin_x + (c + 1) * self.screen.square_size - DOT_RADIUS, self.screen.margin_y + r * self.screen.square_size),
+                    (self.screen.margin_x + c * self.screen.square_size + self.screen.dot_radius, self.screen.margin_y + r * self.screen.square_size),
+                    (self.screen.margin_x + (c + 1) * self.screen.square_size - self.screen.dot_radius, self.screen.margin_y + r * self.screen.square_size),
                     HOVER_EDGE_WIDTH)
             else:
                 pygame.draw.line(self.screen.screen, hover_color,
-                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size + DOT_RADIUS),
-                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size - DOT_RADIUS),
+                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size + self.screen.dot_radius),
+                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size - self.screen.dot_radius),
                     HOVER_EDGE_WIDTH)
 
         # Edges
@@ -95,7 +95,7 @@ class GameRenderer:
                     # Bone shape parameters
                     flare = 20 if is_last else 18
                     mid = 17 if is_last else 15
-                    gap = DOT_RADIUS - 2
+                    gap = self.screen.dot_radius - 2
                     
                     points = [
                         (x1 + gap, y - flare//2), (x1 + s//2, y - mid//2), (x2 - gap, y - flare//2),

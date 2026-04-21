@@ -43,9 +43,22 @@ class MenuRenderer:
         draw_text(self.screen.screen, "Board", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         pygame.draw.rect(self.screen.screen, RED, (btn_start_x + 20, row_y - 30, 190, 60), border_radius=20)
-        draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75 , row_y, self.screen.font, WHITE)
+        draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75 + 20, row_y, self.screen.font, WHITE)
         if "dropdown" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
+
+        # Custom Indicators (Restored)
+        if self.screen.board_size_name == "Custom":
+            rows, cols = self.screen.board_size
+            r_rect = pygame.Rect(btn_start_x + 220, row_y - 30, 60, 60)
+            c_rect = pygame.Rect(btn_start_x + 300, row_y - 30, 60, 60)
+            
+            pygame.draw.circle(self.screen.screen, RED, r_rect.center, 30)
+            pygame.draw.circle(self.screen.screen, RED, c_rect.center, 30)
+            
+            draw_text(self.screen.screen, str(rows), r_rect.centerx, r_rect.centery, self.screen.font, WHITE)
+            draw_text(self.screen.screen, "x", btn_start_x + 290, row_y, self.screen.small_font, DARK_TEAL)
+            draw_text(self.screen.screen, str(cols), c_rect.centerx, c_rect.centery, self.screen.font, WHITE)
         
         # Quick Game
         row_y += spacing
@@ -77,6 +90,34 @@ class MenuRenderer:
         
         if self.screen.show_help:
             self.draw_help_overlay()
+
+        if self.screen.choosing_custom_row or self.screen.choosing_custom_col:
+            self.draw_number_picker()
+
+    # Vẽ bảng số để chọn hàng/cột
+    def draw_number_picker(self):
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(150)
+        overlay.fill((50, 80, 80))
+        self.screen.screen.blit(overlay, (0, 0))
+        
+        picker_x = WIDTH // 2 - 150
+        picker_y = HEIGHT // 2 - 150
+        
+        panel_rect = pygame.Rect(picker_x - 20, picker_y - 80, 340, 400) # 20, 80, 340: rộng, 440: cao
+        pygame.draw.rect(self.screen.screen, BG_COLOR, panel_rect, border_radius=20)
+        title = "Select Rows" if self.screen.choosing_custom_row else "Select Columns"
+        draw_text(self.screen.screen, title, WIDTH // 2, picker_y - 45, self.screen.label_font, DARK_TEAL)
+
+        for i in range(19): # Numbers 2 to 20
+            num = i + 2
+            row, col = i // 5, i % 5
+            btn_size = 60
+            btn_rect = pygame.Rect(picker_x + col * btn_size, picker_y + row * btn_size, btn_size, btn_size)
+            pygame.draw.rect(self.screen.screen, RED, btn_rect)
+            pygame.draw.rect(self.screen.screen, WHITE, btn_rect, 1) # Thin white border
+            draw_text(self.screen.screen, str(num), btn_rect.centerx, btn_rect.centery, self.screen.font, WHITE)
+            
     # Dropdown của Difficulty
     def draw_diff_dropdown(self):
         options = ["Easy", "Medium", "Hard"]
