@@ -46,7 +46,6 @@ class Screen:
         self.show_dropdown = False
         self.show_diff_dropdown = False
         self.show_help = False
-        self.sound_on = True
         
         self.margin_x = 0
         self.margin_y = 0
@@ -66,6 +65,10 @@ class Screen:
         self.game_renderer = GameRenderer(self)
         self.start_renderer = StartRenderer(self)
         self.audio_settings_ui = AudioSettingsUI(self, self.audio_manager)
+
+    @property
+    def sound_on(self):
+        return not self.audio_manager.is_muted
 
     def _load_icons(self):
         icon_path = "ui/icon/"
@@ -184,8 +187,13 @@ class Screen:
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
                         if move and move in self.engine.board.get_possible_moves():
-                            self.engine.make_move(move)
+                            score = self.engine.make_move(move)
                             self.last_move = move
+                            if score is not None:
+                                if score > 0:
+                                    self.audio_manager.play_sfx('score')
+                                else:
+                                    self.audio_manager.play_sfx('move')
                 # Game over screen
                 elif self.state == 'GAME_OVER':
                     self.state = 'START_SCREEN'

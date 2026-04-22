@@ -4,8 +4,15 @@ from constants import DEFAULT_VOLUME, MUTE_DEFAULT
 
 class AudioManager:
     def __init__(self):
-        if not pygame.mixer.get_init():
+        # Pre-initialize mixer with standard frequency and size for better compatibility
+        if pygame.mixer.get_init():
+            pygame.mixer.quit()
+        try:
+            pygame.mixer.pre_init(44100, -16, 2, 512)
             pygame.mixer.init()
+            pygame.mixer.set_num_channels(32)
+        except pygame.error as e:
+            print(f"Critial Error: Could not initialize mixer: {e}")
             
         self.bgm_volume = DEFAULT_VOLUME
         self.sfx_volume = DEFAULT_VOLUME
@@ -22,14 +29,17 @@ class AudioManager:
         
         # Load SFX
         sfx_files = {
-            'move': 'move.mp3',
-            'score': 'score.mp3',
-            'gameover': 'gameover.mp3',
-            'winner': 'winner.mp3'
+            'move': 'move.wav',
+            'score': 'score.wav',
+            'gameover': 'gameover.wav',
+            'winner': 'winner.wav'
         }
         
         for name, filename in sfx_files.items():
+            # Try .wav first, then .mp3 as fallback
             path = os.path.join(audio_dir, filename)
+            if not os.path.exists(path):
+                path = path.replace('.wav', '.mp3')
             if os.path.exists(path):
                 try:
                     self.sfx[name] = pygame.mixer.Sound(path)
@@ -58,7 +68,10 @@ class AudioManager:
         if not self.is_muted and name in self.sfx:
             sound = self.sfx[name]
             sound.set_volume(self.sfx_volume)
-            sound.play()
+            # Use a fresh channel to allow overlapping sounds
+            channel = pygame.mixer.find_channel(True)
+            if channel:
+                channel.play(sound)
 
     def set_bgm_volume(self, volume):
         self.bgm_volume = max(0.0, min(1.0, volume))
