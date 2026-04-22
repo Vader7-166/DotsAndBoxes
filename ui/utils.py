@@ -11,7 +11,7 @@ def draw_text(surface, text, x, y, font, color=BLACK, align="center"):
         rect = img.get_rect(midright=(x, y))
     surface.blit(img, rect)
 
-def draw_pill_button(surface, text, x, y, w, h, font, is_active=False, is_disabled=False, icon=None):
+def draw_pill_button(surface, text, x, y, w, h, font, is_active=False, is_disabled=False, icon=None, is_hovered=False):
     rect = pygame.Rect(x, y, w, h)
     
     # Determine colors based on state
@@ -24,6 +24,10 @@ def draw_pill_button(surface, text, x, y, w, h, font, is_active=False, is_disabl
     else:
         bg_color = CYAN
         text_color = WHITE
+        
+    # Apply hover brightness
+    if is_hovered and not is_disabled:
+        bg_color = tuple(min(255, c + 30) for c in bg_color)
         
     pygame.draw.rect(surface, bg_color, rect, border_radius=15)
     

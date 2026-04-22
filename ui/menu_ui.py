@@ -8,6 +8,8 @@ class MenuRenderer:
         self.screen = screen
 
     def draw(self):
+        # Mouse position for hover detection
+        mouse_pos = pygame.mouse.get_pos()
         draw_logo(self.screen.screen, WIDTH // 2, 100, self.screen.title_font)
         
         #  Settings Rows
@@ -16,14 +18,15 @@ class MenuRenderer:
         row_y = 305
         spacing = 80
         icon_x = label_x + 10
-        icon_y = row_y - 16
 
         # Players
         draw_text(self.screen.screen, "Players", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
-        draw_pill_button(self.screen.screen, "PVE", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVE)
-        draw_pill_button(self.screen.screen, "PVP", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, self.screen.mode == GameMode.PVP)
+        pve_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 90, 60)
+        pvp_rect = pygame.Rect(btn_start_x + 120, row_y - 30, 90, 60)
+        draw_pill_button(self.screen.screen, "PVE", pve_rect.x, pve_rect.y, pve_rect.w, pve_rect.h, self.screen.font, self.screen.mode == GameMode.PVE, is_hovered=pve_rect.collidepoint(mouse_pos))
+        draw_pill_button(self.screen.screen, "PVP", pvp_rect.x, pvp_rect.y, pvp_rect.w, pvp_rect.h, self.screen.font, self.screen.mode == GameMode.PVP, is_hovered=pvp_rect.collidepoint(mouse_pos))
         
         # Difficulty
         row_y += spacing
@@ -32,9 +35,13 @@ class MenuRenderer:
         draw_text(self.screen.screen, "Difficulty", label_x - 10, row_y, self.screen.label_font, diff_color, align="right")        
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
+        diff_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
         diff_bg = UI_DISABLED_GRAY if is_diff_disabled else RED
-        pygame.draw.rect(self.screen.screen, diff_bg, (btn_start_x + 20, row_y - 30, 190, 60), border_radius=20)
-        draw_text(self.screen.screen, self.screen.difficulty.capitalize(), btn_start_x + 75 + 20, row_y, self.screen.font, WHITE)
+        # Brighten on hover
+        if not is_diff_disabled and diff_rect.collidepoint(mouse_pos):
+            diff_bg = tuple(min(255, c + 30) for c in diff_bg)
+        pygame.draw.rect(self.screen.screen, diff_bg, diff_rect, border_radius=20)
+        draw_text(self.screen.screen, self.screen.difficulty.capitalize(), diff_rect.centerx - 20, diff_rect.centery, self.screen.font, WHITE)
         if "dropdown" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
         
@@ -42,19 +49,29 @@ class MenuRenderer:
         row_y += spacing
         draw_text(self.screen.screen, "Board", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
-        pygame.draw.rect(self.screen.screen, RED, (btn_start_x + 20, row_y - 30, 190, 60), border_radius=20)
-        draw_text(self.screen.screen, self.screen.board_size_name, btn_start_x + 75 + 20, row_y, self.screen.font, WHITE)
+        
+        board_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
+        board_bg = RED
+        if board_rect.collidepoint(mouse_pos):
+            board_bg = tuple(min(255, c + 30) for c in board_bg)
+        pygame.draw.rect(self.screen.screen, board_bg, board_rect, border_radius=20)
+        draw_text(self.screen.screen, self.screen.board_size_name, board_rect.centerx - 20, board_rect.centery, self.screen.font, WHITE)
         if "dropdown" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
 
-        # Custom Indicators (Restored)
+        # Custom Indicators
         if self.screen.board_size_name == "Custom":
             rows, cols = self.screen.board_size
             r_rect = pygame.Rect(btn_start_x + 220, row_y - 30, 60, 60)
             c_rect = pygame.Rect(btn_start_x + 300, row_y - 30, 60, 60)
             
-            pygame.draw.circle(self.screen.screen, RED, r_rect.center, 30)
-            pygame.draw.circle(self.screen.screen, RED, c_rect.center, 30)
+            r_bg = RED
+            if r_rect.collidepoint(mouse_pos): r_bg = tuple(min(255, c + 30) for c in r_bg)
+            pygame.draw.circle(self.screen.screen, r_bg, r_rect.center, 30)
+            
+            c_bg = RED
+            if c_rect.collidepoint(mouse_pos): c_bg = tuple(min(255, c + 30) for c in c_bg)
+            pygame.draw.circle(self.screen.screen, c_bg, c_rect.center, 30)
             
             draw_text(self.screen.screen, str(rows), r_rect.centerx, r_rect.centery, self.screen.font, WHITE)
             draw_text(self.screen.screen, "x", btn_start_x + 290, row_y, self.screen.small_font, DARK_TEAL)
@@ -64,23 +81,38 @@ class MenuRenderer:
         row_y += spacing
         draw_text(self.screen.screen, "Quick Game", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
-        draw_pill_button(self.screen.screen, "On", btn_start_x + 20, row_y - 30, 90, 60, self.screen.font, self.screen.is_quickplay)
-        draw_pill_button(self.screen.screen, "Off", btn_start_x + 100 + 20, row_y - 30, 90, 60, self.screen.font, not self.screen.is_quickplay)
         
-        # SAVE Button
-        play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
-        pygame.draw.rect(self.screen.screen, (220, 240, 240), (play_rect.x+2, play_rect.y+8, play_rect.w, play_rect.h), border_radius=25)
-        pygame.draw.rect(self.screen.screen, RED, (play_rect.x, play_rect.y+4, play_rect.w, play_rect.h), border_radius=25)
-        pygame.draw.rect(self.screen.screen, WHITE, play_rect, border_radius=25)
-        draw_text(self.screen.screen, "SAVE", WIDTH//2, 710, self.screen.play_font, RED)
+        on_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 90, 60)
+        off_rect = pygame.Rect(btn_start_x + 120, row_y - 30, 90, 60)
+        draw_pill_button(self.screen.screen, "On", on_rect.x, on_rect.y, on_rect.w, on_rect.h, self.screen.font, self.screen.is_quickplay, is_hovered=on_rect.collidepoint(mouse_pos))
+        draw_pill_button(self.screen.screen, "Off", off_rect.x, off_rect.y, off_rect.w, off_rect.h, self.screen.font, not self.screen.is_quickplay, is_hovered=off_rect.collidepoint(mouse_pos))
+        
+        # SAVE Button (3D Effect with Hover)
+        save_btn_w, save_btn_h = 240, 100
+        save_rect = pygame.Rect(WIDTH//2 - save_btn_w//2, 660, save_btn_w, save_btn_h)
+        is_save_hovered = save_rect.collidepoint(mouse_pos)
+        
+        shadow_offset = 8 if is_save_hovered else 6
+        lift = -2 if is_save_hovered else 0
+        
+        # Shadow
+        pygame.draw.rect(self.screen.screen, DARK_TEAL, (save_rect.x, save_rect.y + shadow_offset, save_rect.w, save_rect.h), border_radius=25)
+        # Button
+        s_bg = tuple(min(255, c + 20) for c in RED) if is_save_hovered else RED
+        save_draw_rect = pygame.Rect(save_rect.x, save_rect.y + lift, save_rect.w, save_rect.h)
+        pygame.draw.rect(self.screen.screen, s_bg, save_draw_rect, border_radius=25)
+        pygame.draw.rect(self.screen.screen, WHITE, save_draw_rect, 2, border_radius=25)
+        draw_text(self.screen.screen, "SAVE", save_draw_rect.centerx, save_draw_rect.centery, self.screen.play_font, WHITE)
         
         # Help Button
-        help_rect = pygame.Rect(WIDTH - 80, HEIGHT - 80, 60, 60)
-        pygame.draw.circle(self.screen.screen, CYAN, help_rect.center, 30)
+        help_rect = pygame.Rect(WIDTH - 90, HEIGHT - 90, 60, 60)
+        is_help_hovered = help_rect.collidepoint(mouse_pos)
+        h_radius = 33 if is_help_hovered else 30
+        h_bg = tuple(min(255, c + 30) for c in CYAN) if is_help_hovered else CYAN
+        pygame.draw.circle(self.screen.screen, h_bg, help_rect.center, h_radius)
         draw_text(self.screen.screen, "?", help_rect.centerx, help_rect.centery, self.screen.font, WHITE)
 
-        # Speaker Button (Bottom Left)
-        mouse_pos = pygame.mouse.get_pos()
+        # Speaker Button
         speaker_rect = pygame.Rect(30, HEIGHT - 90, 60, 60)
         hover_speaker = speaker_rect.collidepoint(mouse_pos)
         draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on, hover_speaker)
@@ -123,25 +155,32 @@ class MenuRenderer:
             
     # Dropdown của Difficulty
     def draw_diff_dropdown(self):
+        mouse_pos = pygame.mouse.get_pos()
         options = ["Easy", "Medium", "Hard"]
         start_y = 430
         btn_start_x = 310
         for i, opt in enumerate(options):
             rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
-            pygame.draw.rect(self.screen.screen, RED, rect)
+            bg = RED
+            if rect.collidepoint(mouse_pos): bg = tuple(min(255, c + 30) for c in bg)
+            pygame.draw.rect(self.screen.screen, bg, rect)
             pygame.draw.line(self.screen.screen, WHITE, (btn_start_x + 20, rect.bottom), (btn_start_x + 210, rect.bottom), 1)
-            draw_text(self.screen.screen, opt, btn_start_x + 95 + 20, rect.centery, self.screen.font, WHITE)
+            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, WHITE)
+
     # Dropdown của Board
     def draw_dropdown(self):
+        mouse_pos = pygame.mouse.get_pos()
         options = ["Small", "Medium", "Large", "Custom"]
         start_y = 500
         btn_start_x = 310
         
         for i, opt in enumerate(options):
             rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
-            pygame.draw.rect(self.screen.screen, RED, rect)
-            pygame.draw.line(self.screen.screen, WHITE, (btn_start_x, rect.bottom), (btn_start_x + 190, rect.bottom), 1)
-            draw_text(self.screen.screen, opt, btn_start_x + 95, rect.centery, self.screen.font, WHITE)
+            bg = RED
+            if rect.collidepoint(mouse_pos): bg = tuple(min(255, c + 30) for c in bg)
+            pygame.draw.rect(self.screen.screen, bg, rect)
+            pygame.draw.line(self.screen.screen, WHITE, (btn_start_x + 20, rect.bottom), (btn_start_x + 210, rect.bottom), 1)
+            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, WHITE)
     
     def draw_help_overlay(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))
@@ -183,8 +222,14 @@ class MenuRenderer:
         draw_text(self.screen.screen, "scoring sooner.", WIDTH//2, box_y + 115, self.screen.small_font, DARK_TEAL)
         
         #Nút đóng X
+        mouse_pos = pygame.mouse.get_pos()
         close_y = 620
-        pygame.draw.circle(self.screen.screen, CYAN, (WIDTH//2, close_y), 30)
+        close_rect = pygame.Rect(WIDTH//2 - 30, close_y - 30, 60, 60)
+        is_close_hovered = close_rect.collidepoint(mouse_pos)
+        c_radius = 33 if is_close_hovered else 30
+        c_bg = tuple(min(255, c + 30) for c in CYAN) if is_close_hovered else CYAN
+        
+        pygame.draw.circle(self.screen.screen, c_bg, (WIDTH//2, close_y), c_radius)
         if "close" in self.screen.icons:
             draw_icon(self.screen.screen, self.screen.icons["close"], WIDTH//2, close_y, center=True)
         else:
