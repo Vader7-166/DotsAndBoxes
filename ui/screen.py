@@ -7,6 +7,8 @@ from ai.bot import AIBot
 from ui.menu_ui import MenuRenderer
 from ui.game_ui import GameRenderer
 from ui.start_ui import StartRenderer
+from ui.audio_manager import AudioManager
+from ui.audio_settings_ui import AudioSettingsUI
 
 class Screen:
     def __init__(self):
@@ -34,6 +36,7 @@ class Screen:
         self.engine = None
         self.bot = None
         self.state = 'START_SCREEN'
+        self.previous_state = 'START_SCREEN'
         
         self.mode = GameMode.PVE
         self.difficulty = 'medium'
@@ -43,7 +46,6 @@ class Screen:
         self.show_dropdown = False
         self.show_diff_dropdown = False
         self.show_help = False
-        self.sound_on = True
         
         self.margin_x = 0
         self.margin_y = 0
@@ -52,11 +54,21 @@ class Screen:
         self.mouse_pos = (0, 0)
         self.last_move = None
         self.hovered_edge = None
+        self.show_help = False
+        
+        # Audio
+        self.audio_manager = AudioManager()
+        self.audio_manager.play_bgm()
 
         #Gọi UI
         self.menu_renderer = MenuRenderer(self)
         self.game_renderer = GameRenderer(self)
         self.start_renderer = StartRenderer(self)
+        self.audio_settings_ui = AudioSettingsUI(self, self.audio_manager)
+
+    @property
+    def sound_on(self):
+        return not self.audio_manager.is_muted
 
     def _load_icons(self):
         icon_path = "ui/icon/"
@@ -115,6 +127,14 @@ class Screen:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            
+            if self.state == 'AUDIO_SETTINGS':
+                self.audio_settings_ui.handle_event(event)
+                if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEMOTION:
+                    # If we don't return here, it might trigger other clicks if coordinates overlap
+                    # but since we are in AUDIO_SETTINGS state, other blocks won't execute anyway.
+                    pass
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 
@@ -130,7 +150,8 @@ class Screen:
                 if self.state == 'START_SCREEN':
                     # Sound button
                     if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
-                        self.sound_on = not self.sound_on
+                        self.previous_state = self.state
+                        self.state = 'AUDIO_SETTINGS'
                         return
                     # Start game button
                     if self.start_renderer.start_game_rect.collidepoint(x, y):
@@ -147,7 +168,8 @@ class Screen:
                     nav_center_x = WIDTH // 2
                     # Sound button
                     if (x - 60)**2 + (y - nav_y)**2 <= 30**2:
-                        self.sound_on = not self.sound_on
+                        self.previous_state = self.state
+                        self.state = 'AUDIO_SETTINGS'
                         return
                     # Home button
                     elif (x - (nav_center_x - 55))**2 + (y - nav_y)**2 <= 42**2:
@@ -165,8 +187,13 @@ class Screen:
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
                         move = self._get_move_from_mouse(x, y)
                         if move and move in self.engine.board.get_possible_moves():
-                            self.engine.make_move(move)
+                            score = self.engine.make_move(move)
                             self.last_move = move
+                            if score is not None:
+                                if score > 0:
+                                    self.audio_manager.play_sfx('score')
+                                else:
+                                    self.audio_manager.play_sfx('move')
                 # Game over screen
                 elif self.state == 'GAME_OVER':
                     self.state = 'START_SCREEN'
@@ -204,7 +231,8 @@ class Screen:
 
         # Handle Bottom UI
         if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
-            self.sound_on = not self.sound_on
+            self.previous_state = self.state
+            self.state = 'AUDIO_SETTINGS'
             return
         play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
         if play_rect.collidepoint(x, y):
@@ -248,18 +276,32 @@ class Screen:
             if btn_start_x <= x <= btn_start_x + 90: self.is_quickplay = True
             elif btn_start_x + 100 <= x <= btn_start_x + 190: self.is_quickplay = False
 
+        # Audio Settings Button
+        if WIDTH//2 - 120 <= x <= WIDTH//2 + 120 and 620 <= y <= 680:
+            self.state = 'AUDIO_SETTINGS'
+
     def _update(self):
         if self.state == 'IN_GAME':
             self.engine.update()
             if self.engine.state in [GameState.PLAYER_1_WIN, GameState.PLAYER_2_WIN, GameState.DRAW]:
                 self.state = 'GAME_OVER'
+                # Play outcome sound: Player 1 is always the human
+                if self.engine.state == GameState.PLAYER_1_WIN:
+                    self.audio_manager.play_sfx('winner')
+                else:
+                    self.audio_manager.play_sfx('gameover')
                 return
             if self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and self.engine.state == GameState.IN_GAME:
                 pygame.time.delay(600)
                 move = self.bot.get_move(self.engine.board)
                 if move:
-                    self.engine.make_move(move)
-                    self.last_move = move
+                    score = self.engine.make_move(move)
+                    if score is not None:
+                        self.last_move = move
+                        if score > 0:
+                            self.audio_manager.play_sfx('score')
+                        else:
+                            self.audio_manager.play_sfx('move')
 
     def _get_move_from_mouse(self, x, y):
         rows, cols = self.board_size
@@ -311,4 +353,6 @@ class Screen:
         elif self.state == 'GAME_OVER':
             self.game_renderer.draw_board()
             self.game_renderer.draw_game_over()
+        elif self.state == 'AUDIO_SETTINGS':
+            self.audio_settings_ui.draw()
         pygame.display.flip()
