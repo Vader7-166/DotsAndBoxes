@@ -80,7 +80,10 @@ class MenuRenderer:
         draw_text(self.screen.screen, "?", help_rect.centerx, help_rect.centery, self.screen.font, WHITE)
 
         # Speaker Button (Bottom Left)
-        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on)
+        mouse_pos = pygame.mouse.get_pos()
+        speaker_rect = pygame.Rect(30, HEIGHT - 90, 60, 60)
+        hover_speaker = speaker_rect.collidepoint(mouse_pos)
+        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on, hover_speaker)
 
         if self.screen.show_dropdown:
             self.draw_dropdown()

@@ -153,7 +153,10 @@ class GameRenderer:
         draw_text(self.screen.screen, "?", WIDTH - 60, nav_y, self.screen.font, WHITE)
 
         # Speaker button (Bottom Left)
-        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on)
+        mouse_pos = pygame.mouse.get_pos()
+        speaker_rect = pygame.Rect(30, HEIGHT - 90, 60, 60)
+        hover_speaker = speaker_rect.collidepoint(mouse_pos)
+        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on, hover_speaker)
 
     def draw_game_over(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))

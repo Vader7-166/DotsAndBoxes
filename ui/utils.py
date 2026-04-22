@@ -59,9 +59,11 @@ def draw_logo(surface, x, y, title_font):
             dot_x = lx + d * (lw // 4)
             pygame.draw.circle(surface, WHITE, (dot_x, line_y), 6)
             
-def draw_speaker(surface, x, y, sound_on):
-    color = CYAN
-    pygame.draw.circle(surface, color, (x, y), 30)
+def draw_speaker(surface, x, y, sound_on, is_hovered=False):
+    radius = 33 if is_hovered else 30
+    color = tuple(min(255, c + 30) for c in CYAN) if is_hovered else CYAN
+    
+    pygame.draw.circle(surface, color, (x, y), radius)
     
     # Draw Speaker Body
     s_col = WHITE
