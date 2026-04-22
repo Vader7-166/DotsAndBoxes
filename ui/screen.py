@@ -7,6 +7,8 @@ from ai.bot import AIBot
 from ui.menu_ui import MenuRenderer
 from ui.game_ui import GameRenderer
 from ui.start_ui import StartRenderer
+from ui.audio_manager import AudioManager
+from ui.audio_settings_ui import AudioSettingsUI
 
 class Screen:
     def __init__(self):
@@ -34,6 +36,7 @@ class Screen:
         self.engine = None
         self.bot = None
         self.state = 'START_SCREEN'
+        self.previous_state = 'START_SCREEN'
         
         self.mode = GameMode.PVE
         self.difficulty = 'medium'
@@ -53,11 +56,16 @@ class Screen:
         self.last_move = None
         self.hovered_edge = None
         self.show_help = False
+        
+        # Audio
+        self.audio_manager = AudioManager()
+        self.audio_manager.play_bgm()
 
         #Gọi UI
         self.menu_renderer = MenuRenderer(self)
         self.game_renderer = GameRenderer(self)
         self.start_renderer = StartRenderer(self)
+        self.audio_settings_ui = AudioSettingsUI(self, self.audio_manager)
 
     def _load_icons(self):
         icon_path = "ui/icon/"
@@ -116,6 +124,14 @@ class Screen:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            
+            if self.state == 'AUDIO_SETTINGS':
+                self.audio_settings_ui.handle_event(event)
+                if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP or event.type == pygame.MOUSEMOTION:
+                    # If we don't return here, it might trigger other clicks if coordinates overlap
+                    # but since we are in AUDIO_SETTINGS state, other blocks won't execute anyway.
+                    pass
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 
@@ -131,7 +147,8 @@ class Screen:
                 if self.state == 'START_SCREEN':
                     # Sound button
                     if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
-                        self.sound_on = not self.sound_on
+                        self.previous_state = self.state
+                        self.state = 'AUDIO_SETTINGS'
                         return
                     # Start game button
                     if self.start_renderer.start_game_rect.collidepoint(x, y):
@@ -148,7 +165,8 @@ class Screen:
                     nav_center_x = WIDTH // 2
                     # Sound button
                     if (x - 60)**2 + (y - nav_y)**2 <= 30**2:
-                        self.sound_on = not self.sound_on
+                        self.previous_state = self.state
+                        self.state = 'AUDIO_SETTINGS'
                         return
                     # Home button
                     elif (x - (nav_center_x - 55))**2 + (y - nav_y)**2 <= 42**2:
@@ -205,7 +223,8 @@ class Screen:
 
         # Handle Bottom UI
         if (x - 60)**2 + (y - (HEIGHT - 60))**2 <= 30**2:
-            self.sound_on = not self.sound_on
+            self.previous_state = self.state
+            self.state = 'AUDIO_SETTINGS'
             return
         play_rect = pygame.Rect(WIDTH//2 - 120, 660, 240, 100)
         if play_rect.collidepoint(x, y):
@@ -258,7 +277,11 @@ class Screen:
             self.engine.update()
             if self.engine.state in [GameState.PLAYER_1_WIN, GameState.PLAYER_2_WIN, GameState.DRAW]:
                 self.state = 'GAME_OVER'
-                self.audio_manager.play_sfx('gameover')
+                # Play outcome sound: Player 1 is always the human
+                if self.engine.state == GameState.PLAYER_1_WIN:
+                    self.audio_manager.play_sfx('winner')
+                else:
+                    self.audio_manager.play_sfx('gameover')
                 return
             if self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and self.engine.state == GameState.IN_GAME:
                 pygame.time.delay(600)
@@ -322,4 +345,6 @@ class Screen:
         elif self.state == 'GAME_OVER':
             self.game_renderer.draw_board()
             self.game_renderer.draw_game_over()
+        elif self.state == 'AUDIO_SETTINGS':
+            self.audio_settings_ui.draw()
         pygame.display.flip()

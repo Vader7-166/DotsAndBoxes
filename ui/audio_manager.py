@@ -22,9 +22,10 @@ class AudioManager:
         
         # Load SFX
         sfx_files = {
-            'move': 'move.wav',
-            'score': 'score.wav',
-            'gameover': 'gameover.wav'
+            'move': 'move.mp3',
+            'score': 'score.mp3',
+            'gameover': 'gameover.mp3',
+            'winner': 'winner.mp3'
         }
         
         for name, filename in sfx_files.items():
