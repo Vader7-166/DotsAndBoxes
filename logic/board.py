@@ -92,3 +92,20 @@ class Board:
         if player_id == 1:
             return self.p1_score
         return self.p2_score
+
+    def get_box_sides_count(self, r, c):
+        """Trả về số lượng cạnh đã được vẽ của ô (r, c)."""
+        count = 0
+        if self.h_edges[r][c]: count += 1
+        if self.h_edges[r+1][c]: count += 1
+        if self.v_edges[r][c]: count += 1
+        if self.v_edges[r][c+1]: count += 1
+        return count
+
+    def get_all_box_side_counts(self):
+        """Trả về danh sách số lượng cạnh của tất cả các ô."""
+        counts = []
+        for r in range(self.rows):
+            for c in range(self.cols):
+                counts.append(self.get_box_sides_count(r, c))
+        return counts

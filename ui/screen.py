@@ -428,7 +428,10 @@ class Screen:
                 # Actually, let's just use 't' in the renderer.
 
         if self.state == 'IN_GAME':
-            self.engine.update()
+            timeout_move = self.engine.update()
+            if timeout_move:
+                self.last_move = timeout_move
+                self.audio_manager.play_sfx('move')
             
             # Bot Turn Handling (Threaded)
             if self.engine.state == GameState.IN_GAME and self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and not self.bot_thinking:

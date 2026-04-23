@@ -52,7 +52,10 @@ class GameEngine:
                 # Hết giờ -> tự động đi nước đi đầu tiên có thể và đổi lượt
                 moves = self.board.get_possible_moves()
                 if moves:
-                    self.make_move(moves[0])
+                    move = moves[0]
+                    self.make_move(move)
+                    return move
+        return None
 
     def make_move(self, move):
         if self.state != GameState.IN_GAME:
