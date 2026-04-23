@@ -1,6 +1,6 @@
 import pygame
 from constants import *
-from ui.utils import draw_text, draw_pill_button, draw_logo, draw_speaker, draw_icon
+from ui.utils import draw_text, draw_pill_button, draw_logo, draw_speaker, draw_icon, draw_glow_line, draw_modern_background
 from logic.game_engine import GameMode
 
 class MenuRenderer:
@@ -8,6 +8,9 @@ class MenuRenderer:
         self.screen = screen
 
     def draw(self):
+        # Modern Background
+        draw_modern_background(self.screen.screen)
+        
         # Mouse position for hover detection
         mouse_pos = pygame.mouse.get_pos()
         draw_logo(self.screen.screen, WIDTH // 2, 100, self.screen.title_font)
@@ -37,7 +40,6 @@ class MenuRenderer:
         
         diff_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
         diff_bg = UI_DISABLED_GRAY if is_diff_disabled else RED
-        # Brighten on hover
         if not is_diff_disabled and diff_rect.collidepoint(mouse_pos):
             diff_bg = tuple(min(255, c + 30) for c in diff_bg)
         pygame.draw.rect(self.screen.screen, diff_bg, diff_rect, border_radius=20)
@@ -47,7 +49,7 @@ class MenuRenderer:
         
         #  Board
         row_y += spacing
-        draw_text(self.screen.screen, "Board", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
+        draw_text(self.screen.screen, "Board Size", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         board_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
@@ -79,7 +81,7 @@ class MenuRenderer:
         
         # Quick Game
         row_y += spacing
-        draw_text(self.screen.screen, "Quick Game", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
+        draw_text(self.screen.screen, "Time Limit", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         on_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 90, 60)
@@ -87,22 +89,20 @@ class MenuRenderer:
         draw_pill_button(self.screen.screen, "On", on_rect.x, on_rect.y, on_rect.w, on_rect.h, self.screen.font, self.screen.is_quickplay, is_hovered=on_rect.collidepoint(mouse_pos))
         draw_pill_button(self.screen.screen, "Off", off_rect.x, off_rect.y, off_rect.w, off_rect.h, self.screen.font, not self.screen.is_quickplay, is_hovered=off_rect.collidepoint(mouse_pos))
         
-        # SAVE Button (3D Effect with Hover)
+        # SAVE Button
         save_btn_w, save_btn_h = 240, 100
         save_rect = pygame.Rect(WIDTH//2 - save_btn_w//2, 660, save_btn_w, save_btn_h)
         is_save_hovered = save_rect.collidepoint(mouse_pos)
         
-        shadow_offset = 8 if is_save_hovered else 6
-        lift = -2 if is_save_hovered else 0
+        shadow_offset = 10 if is_save_hovered else 6
+        lift = -4 if is_save_hovered else 0
         
-        # Shadow
-        pygame.draw.rect(self.screen.screen, DARK_TEAL, (save_rect.x, save_rect.y + shadow_offset, save_rect.w, save_rect.h), border_radius=25)
-        # Button
-        s_bg = tuple(min(255, c + 20) for c in RED) if is_save_hovered else RED
+        pygame.draw.rect(self.screen.screen, DARK_TEAL, (save_rect.x, save_rect.y + shadow_offset, save_rect.w, save_rect.h), border_radius=30)
+        s_bg = tuple(min(255, c + 40) for c in RED) if is_save_hovered else RED
         save_draw_rect = pygame.Rect(save_rect.x, save_rect.y + lift, save_rect.w, save_rect.h)
-        pygame.draw.rect(self.screen.screen, s_bg, save_draw_rect, border_radius=25)
-        pygame.draw.rect(self.screen.screen, WHITE, save_draw_rect, 2, border_radius=25)
-        draw_text(self.screen.screen, "SAVE", save_draw_rect.centerx, save_draw_rect.centery, self.screen.play_font, WHITE)
+        pygame.draw.rect(self.screen.screen, s_bg, save_draw_rect, border_radius=30)
+        pygame.draw.rect(self.screen.screen, WHITE, save_draw_rect, 2, border_radius=30)
+        draw_text(self.screen.screen, "APPLY", save_draw_rect.centerx, save_draw_rect.centery, self.screen.play_font, WHITE)
         
         # Help Button
         help_rect = pygame.Rect(WIDTH - 90, HEIGHT - 90, 60, 60)
@@ -132,16 +132,18 @@ class MenuRenderer:
     # Vẽ bảng số để chọn hàng/cột
     def draw_number_picker(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.set_alpha(150)
-        overlay.fill((50, 80, 80))
+        overlay.set_alpha(180)
+        overlay.fill((10, 20, 20))
         self.screen.screen.blit(overlay, (0, 0))
         
         picker_x = WIDTH // 2 - 150
         picker_y = HEIGHT // 2 - 150
         
-        panel_rect = pygame.Rect(picker_x - 20, picker_y - 80, 340, 400) # 20, 80, 340: rộng, 440: cao
-        pygame.draw.rect(self.screen.screen, BG_COLOR, panel_rect, border_radius=20)
-        title = "Select Rows" if self.screen.choosing_custom_row else "Select Columns"
+        panel_rect = pygame.Rect(picker_x - 20, picker_y - 80, 340, 400)
+        pygame.draw.rect(self.screen.screen, WHITE, panel_rect, border_radius=30)
+        pygame.draw.rect(self.screen.screen, DARK_TEAL, panel_rect, 4, border_radius=30)
+        
+        title = "Rows Count" if self.screen.choosing_custom_row else "Cols Count"
         draw_text(self.screen.screen, title, WIDTH // 2, picker_y - 45, self.screen.label_font, DARK_TEAL)
 
         for i in range(19): # Numbers 2 to 20
@@ -184,46 +186,96 @@ class MenuRenderer:
     
     def draw_help_overlay(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))
-        overlay.set_alpha(150)
-        overlay.fill((50, 80, 80))
+        overlay.set_alpha(240)
+        overlay.fill((5, 15, 15))
         self.screen.screen.blit(overlay, (0, 0))
         
-        #Kích thước của panel hiện lên
-        panel_rect = pygame.Rect(WIDTH//2 - 180, 200, 360, 480)
-        pygame.draw.rect(self.screen.screen, BG_COLOR, panel_rect, border_radius=20)
+        panel_w, panel_h = 560, 620
+        panel_rect = pygame.Rect(WIDTH//2 - panel_w//2, HEIGHT//2 - panel_h//2 - 20, panel_w, panel_h)
+        pygame.draw.rect(self.screen.screen, WHITE, panel_rect, border_radius=40)
+        pygame.draw.rect(self.screen.screen, CYAN, panel_rect, 5, border_radius=40)
         
-        help_text = [
-            "Take turns drawing a line to",
-            "connect two dots. If your line",
-            "closes up a box, you score a point",
-            "and take another turn. The player",
-            "with the most boxes after all the",
-            "lines are drawn wins the game."
-        ]
+        # Tiêu đề
+        draw_text(self.screen.screen, "HOW TO PLAY", WIDTH//2, panel_rect.y + 50, self.screen.play_font, RED)
+        pygame.draw.line(self.screen.screen, GRAY, (panel_rect.x + 60, panel_rect.y + 90), (panel_rect.x + panel_w - 60, panel_rect.y + 90), 2)
         
-        y = 240
-        for line in help_text:
-            draw_text(self.screen.screen, line, WIDTH//2, y, self.screen.small_font, DARK_TEAL)
-            y += 28
-            
-        box_y = y + 40
-        bx, by = WIDTH//2 - 25, box_y
-        bs = 50
-        pygame.draw.line(self.screen.screen, DARK_TEAL, (bx, by), (bx + bs, by), 6)
-        pygame.draw.line(self.screen.screen, DARK_TEAL, (bx, by + bs), (bx + bs, by + bs), 6)
-        pygame.draw.line(self.screen.screen, DARK_TEAL, (bx, by), (bx, by + bs), 6)
-        pygame.draw.line(self.screen.screen, DARK_TEAL, (bx + bs, by), (bx + bs, by + bs), 6)
+        import math
+        import time
+        t = time.time()
+        
+        # 1. Hướng dẫn kéo thả
+        instruction_y = panel_rect.y + 130
+        draw_text(self.screen.screen, "1. DRAG to connect adjacent dots.", WIDTH//2, instruction_y, self.screen.font, DARK_TEAL)
+        
+        # Demo kéo thả
+        illus_y = instruction_y + 80
+        cx = WIDTH//2
+        dot_dist = 140
+        
+        # Vẽ các dấu chấm
+        for dx in [-dot_dist//2, dot_dist//2]:
+            pygame.draw.circle(self.screen.screen, DARK_TEAL, (cx + dx, illus_y), DOT_RADIUS)
+            pygame.draw.circle(self.screen.screen, WHITE, (cx + dx, illus_y), DOT_RADIUS - 3)
+        
+        # Hoạt họa đường kẻ đang kéo
+        # t chạy từ 0 đến 1 lặp lại
+        anim_t = (t % 2) / 2 # 2 giây 1 vòng
+        drag_progress = math.sin(anim_t * math.pi) # mượt mà qua lại
+        
+        start_x = cx - dot_dist//2
+        target_x = cx + dot_dist//2
+        current_x = start_x + (target_x - start_x) * max(0, drag_progress)
+        
+        if drag_progress > 0:
+            draw_glow_line(self.screen.screen, P1_LIGHT_COLOR, (start_x, illus_y), (current_x, illus_y), HOVER_EDGE_WIDTH, 15)
+            # Vẽ biểu tượng tay/chuột
+            hand_x, hand_y = current_x + 10, illus_y + 20
+            pygame.draw.circle(self.screen.screen, RED, (int(hand_x), int(hand_y)), 15, 3)
+            pygame.draw.circle(self.screen.screen, RED, (int(hand_x), int(hand_y)), 5)
+        
+        # 2. Score points
+        instruction_y = illus_y + 100
+        draw_text(self.screen.screen, "2. Close a box to SCORE 1 POINT.", WIDTH//2, instruction_y, self.screen.font, DARK_TEAL)
+        draw_text(self.screen.screen, "3. Scoring gives you EXTRA TURN!", WIDTH//2, instruction_y + 40, self.screen.font, RED)
+        
+        # Demo ăn ô
+        box_y = instruction_y + 120
+        bs = 80
+        bx, by = WIDTH//2 - bs//2, box_y - bs//2
+        
+        # Hoạt họa đóng ô
+        box_anim_t = (t % 3) / 3 # 3 giây 1 vòng
+        # 0.0 - 0.7: hiện 3 cạnh đầu
+        # 0.7 - 0.8: cạnh cuối đóng lại
+        # 0.8 - 1.0: hiện màu và nghỉ
+        
+        # 3 cạnh cố định
+        pygame.draw.line(self.screen.screen, P1_COLOR, (bx, by), (bx + bs, by), EDGE_WIDTH)
+        pygame.draw.line(self.screen.screen, P1_COLOR, (bx, by), (bx, by + bs), EDGE_WIDTH)
+        pygame.draw.line(self.screen.screen, P1_COLOR, (bx, by + bs), (bx + bs, by + bs), EDGE_WIDTH)
+        
+        if box_anim_t > 0.7:
+            # Cạnh cuối đóng lại
+            pygame.draw.line(self.screen.screen, P1_COLOR, (bx + bs, by), (bx + bs, by + bs), EDGE_WIDTH)
+            if box_anim_t > 0.8:
+                # Hiện màu ô
+                s = pygame.Surface((bs, bs), pygame.SRCALPHA)
+                s.fill((*P1_LIGHT_COLOR, 180))
+                self.screen.screen.blit(s, (bx, by))
+                draw_text(self.screen.screen, "+1", bx + bs//2, by + bs//2, self.screen.font, DARK_TEAL)
+        else:
+            # Cạnh cuối đang chờ (mờ hoặc nét đứt)
+            pygame.draw.line(self.screen.screen, (*GRAY, 100), (bx + bs, by), (bx + bs, by + bs), 2)
+
+        # Chấm cho demo ô
         for dx in [0, bs]:
             for dy in [0, bs]:
-                pygame.draw.circle(self.screen.screen, WHITE, (bx + dx, by + dy), 8)
-                pygame.draw.circle(self.screen.screen, DARK_TEAL, (bx + dx, by + dy), 8, 2)
+                pygame.draw.circle(self.screen.screen, DARK_TEAL, (bx + dx, by + dy), DOT_RADIUS)
+                pygame.draw.circle(self.screen.screen, WHITE, (bx + dx, by + dy), DOT_RADIUS - 3)
 
-        draw_text(self.screen.screen, "Tip: Try Quick Game to get to the", WIDTH//2, box_y + 90, self.screen.small_font, DARK_TEAL)
-        draw_text(self.screen.screen, "scoring sooner.", WIDTH//2, box_y + 115, self.screen.small_font, DARK_TEAL)
-        
-        #Nút đóng X
+        # Nút đóng
         mouse_pos = pygame.mouse.get_pos()
-        close_y = 620
+        close_y = panel_rect.bottom + 45
         close_rect = pygame.Rect(WIDTH//2 - 30, close_y - 30, 60, 60)
         is_close_hovered = close_rect.collidepoint(mouse_pos)
         c_radius = 33 if is_close_hovered else 30

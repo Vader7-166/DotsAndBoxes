@@ -1,5 +1,45 @@
 import pygame
+import math
 from constants import *
+
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+def ease_out_quad(t):
+    return 1 - (1 - t) * (1 - t)
+
+def draw_glow_line(surface, color, start_pos, end_pos, width, glow_radius=10):
+    """Vẽ một đường kẻ với hiệu ứng phát sáng neon và lõi trắng cực sắc nét."""
+    # Vẽ các lớp phát sáng bên dưới
+    for r in range(glow_radius, 0, -2):
+        alpha = int(80 * (1 - r / glow_radius))
+        glow_color = (*color[:3], alpha)
+        s = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        pygame.draw.line(s, glow_color, start_pos, end_pos, width + r * 2)
+        surface.blit(s, (0, 0))
+    
+    # Vẽ đường chính ở trên
+    pygame.draw.line(surface, color, start_pos, end_pos, width)
+    # Thêm LÕI TRẮNG để tạo hiệu ứng ánh sáng mạnh (hiện đại hơn)
+    core_w = max(2, width // 3)
+    pygame.draw.line(surface, WHITE, start_pos, end_pos, core_w)
+    
+    # Làm tròn 2 đầu
+    pygame.draw.circle(surface, color, (int(start_pos[0]), int(start_pos[1])), width // 2)
+    pygame.draw.circle(surface, color, (int(end_pos[0]), int(end_pos[1])), width // 2)
+    pygame.draw.circle(surface, WHITE, (int(start_pos[0]), int(start_pos[1])), core_w // 2)
+    pygame.draw.circle(surface, WHITE, (int(end_pos[0]), int(end_pos[1])), core_w // 2)
+
+def draw_modern_background(surface):
+    """Vẽ nền hiện đại với các chấm chìm mờ ảo."""
+    surface.fill(BG_COLOR)
+    # Vẽ lưới chấm chìm (grid dots)
+    spacing = 40
+    for x in range(0, WIDTH, spacing):
+        for y in range(0, HEIGHT, spacing):
+            # Biến đổi vị trí một chút để trông tự nhiên hơn hoặc giữ nguyên cho gọn gàng
+            pygame.draw.circle(surface, (200, 230, 230), (x, y), 2)
+
 
 def draw_text(surface, text, x, y, font, color=BLACK, align="center"):
     img = font.render(text, True, color)
@@ -87,3 +127,6 @@ def draw_speaker(surface, x, y, sound_on, is_hovered=False):
 def draw_icon(surface, icon, x, y, center=True):
     rect = icon.get_rect(center=(x, y)) if center else (x, y)
     surface.blit(icon, rect)
+
+def ease_out_quad(t):
+    return 1 - (1 - t) * (1 - t)

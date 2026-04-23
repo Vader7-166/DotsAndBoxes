@@ -60,6 +60,12 @@ class Screen:
         self.hovered_edge = None
         self.dot_radius = DOT_RADIUS
         
+        # Drag & Recoil mechanics
+        self.is_dragging = False
+        self.drag_start_pos = None
+        self.is_recoiling = False
+        self.recoil_data = None # {start_vec, end_vec, start_time}
+        
         # Audio
         self.audio_manager = AudioManager()
         self.audio_manager.play_bgm()
@@ -107,6 +113,8 @@ class Screen:
         rows, cols = self.board_size
         self.engine = GameEngine(rows, cols, self.mode, self.is_quickplay)
         self.last_move = None
+        self.is_dragging = False
+        self.drag_start_pos = None
         
         if self.mode == GameMode.PVE:
             self.bot = AIBot(difficulty=self.difficulty, player_id=2)
@@ -122,11 +130,43 @@ class Screen:
         self.margin_x = (WIDTH - (cols * self.square_size)) // 2
         self.margin_y = 120 + (available_height - (rows * self.square_size)) // 2
 
+    def _get_dot_from_mouse(self, x, y):
+        """Returns (r, c) if mouse is near a dot, else None."""
+        rows, cols = self.board_size
+        hitbox = self.dot_radius * 2
+        for r in range(rows + 1):
+            for c in range(cols + 1):
+                dx = self.margin_x + c * self.square_size
+                dy = self.margin_y + r * self.square_size
+                if (x - dx)**2 + (y - dy)**2 <= hitbox**2:
+                    return (r, c)
+        return None
+
     def _handle_events(self):
         self.mouse_pos = pygame.mouse.get_pos()
         self.hovered_edge = None
+        
         if self.state == 'IN_GAME' and self.engine.state == GameState.IN_GAME:
-            self.hovered_edge = self._get_move_from_mouse(self.mouse_pos[0], self.mouse_pos[1])
+            if self.is_dragging:
+                # Determine hovered edge based on drag start and current mouse pos
+                start_r, start_c = self.drag_start_pos
+                current_dot = self._get_dot_from_mouse(self.mouse_pos[0], self.mouse_pos[1])
+                
+                if current_dot:
+                    end_r, end_c = current_dot
+                    # Check if valid horizontal adjacent dot
+                    if start_r == end_r and abs(start_c - end_c) == 1:
+                        c = min(start_c, end_c)
+                        if not self.engine.board.h_edges[start_r][c]:
+                            self.hovered_edge = ('h', start_r, c)
+                    # Check if valid vertical adjacent dot
+                    elif start_c == end_c and abs(start_r - end_r) == 1:
+                        r = min(start_r, end_r)
+                        if not self.engine.board.v_edges[r][start_c]:
+                            self.hovered_edge = ('v', r, start_c)
+            else:
+                self.hovered_edge = self._get_move_from_mouse(self.mouse_pos[0], self.mouse_pos[1])
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -139,13 +179,46 @@ class Screen:
                     # but since we are in AUDIO_SETTINGS state, other blocks won't execute anyway.
                     pass
 
+            if event.type == pygame.MOUSEBUTTONUP:
+                if self.state == 'IN_GAME' and self.is_dragging:
+                    move_made = False
+                    if self.hovered_edge and (self.engine.current_player == 1 or self.engine.mode == GameMode.PVP):
+                        if self.hovered_edge in self.engine.board.get_possible_moves():
+                            score = self.engine.make_move(self.hovered_edge)
+                            self.last_move = self.hovered_edge
+                            move_made = True
+                            if score is not None:
+                                if score > 0:
+                                    self.audio_manager.play_sfx('score')
+                                else:
+                                    self.audio_manager.play_sfx('move')
+                    
+                    if not move_made:
+                        # Start recoil effect (rubber band)
+                        start_r, start_c = self.drag_start_pos
+                        start_vec = pygame.Vector2(self.margin_x + start_c * self.square_size, 
+                                                self.margin_y + start_r * self.square_size)
+                        end_vec = pygame.Vector2(self.mouse_pos)
+                        
+                        # Only recoil if it was dragged a meaningful distance
+                        if start_vec.distance_to(end_vec) > 10:
+                            self.is_recoiling = True
+                            self.recoil_data = {
+                                'start': start_vec,
+                                'current_end': end_vec,
+                                'time': time.time()
+                            }
+                        
+                    self.is_dragging = False
+                    self.drag_start_pos = None
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
                 
                 # Global Help Overlay Close
                 if self.show_help:
-                    # Match close_y = 620 (620 - 30 = 590)
-                    help_close_rect = pygame.Rect(WIDTH//2 - 30, 590, 60, 60)
+                    # Match close_y = 735 (735 - 30 = 705)
+                    help_close_rect = pygame.Rect(WIDTH//2 - 30, 705, 60, 60)
                     if help_close_rect.collidepoint(x, y):
                         self.show_help = False
                     return
@@ -187,17 +260,24 @@ class Screen:
                     elif (x - (WIDTH - 60))**2 + (y - nav_y)**2 <= 30**2:
                         self.show_help = True
                         return
-                    # Game area
+                        
+                    # Dragging logic initialization
                     if self.engine.current_player == 1 or self.engine.mode == GameMode.PVP:
-                        move = self._get_move_from_mouse(x, y)
-                        if move and move in self.engine.board.get_possible_moves():
-                            score = self.engine.make_move(move)
-                            self.last_move = move
-                            if score is not None:
-                                if score > 0:
-                                    self.audio_manager.play_sfx('score')
-                                else:
-                                    self.audio_manager.play_sfx('move')
+                        clicked_dot = self._get_dot_from_mouse(x, y)
+                        if clicked_dot:
+                            self.is_dragging = True
+                            self.drag_start_pos = clicked_dot
+                        else:
+                            # Fallback to click edge
+                            move = self._get_move_from_mouse(x, y)
+                            if move and move in self.engine.board.get_possible_moves():
+                                score = self.engine.make_move(move)
+                                self.last_move = move
+                                if score is not None:
+                                    if score > 0:
+                                        self.audio_manager.play_sfx('score')
+                                    else:
+                                        self.audio_manager.play_sfx('move')
                 # Game over screen
                 elif self.state == 'GAME_OVER':
                     self.state = 'START_SCREEN'
@@ -205,11 +285,11 @@ class Screen:
     def _handle_menu_click(self, x, y):
         # Handle Board Dropdown options
         if self.show_dropdown:
-            options = ["Small", "Medium", "Large", "Custom"] # Thêm Custom vào danh sách
+            options = ["Small", "Medium", "Large", "Custom"]
             btn_start_x = 310
-            start_y = 500 # Đồng bộ với MenuRenderer
+            start_y = 500 # Sync with MenuRenderer
             for i, opt in enumerate(options):
-                # Thêm + 20 để khớp với tọa độ vẽ
+                # Add + 20 to match draw coordinates
                 rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
                 if rect.collidepoint(x, y):
                     if opt == "Small": self.board_size = (3, 3)
@@ -247,7 +327,8 @@ class Screen:
             btn_start_x = 310
             start_y = 430
             for i, opt in enumerate(options):
-                rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+                # Sync rect with drawing (btn_start_x + 20)
+                rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
                 if rect.collidepoint(x, y):
                     self.difficulty = opt.lower()
                     self.show_diff_dropdown = False
@@ -320,6 +401,24 @@ class Screen:
             self.state = 'AUDIO_SETTINGS'
 
     def _update(self):
+        # Update Recoil
+        if self.is_recoiling:
+            elapsed = time.time() - self.recoil_data['time']
+            if elapsed >= RECOIL_DURATION:
+                self.is_recoiling = False
+                self.recoil_data = None
+            else:
+                # Lerp current_end back to start
+                t = elapsed / RECOIL_DURATION
+                # Use ease out for a snappier pull
+                from ui.utils import ease_out_quad
+                t = ease_out_quad(t)
+                start = self.recoil_data['start']
+                orig_end = self.recoil_data['current_end']
+                # We don't want to change 'current_end' because it's our original target
+                # but for drawing we'll calculate it on the fly or store it differently.
+                # Actually, let's just use 't' in the renderer.
+
         if self.state == 'IN_GAME':
             self.engine.update()
             if self.engine.state in [GameState.PLAYER_1_WIN, GameState.PLAYER_2_WIN, GameState.DRAW]:
@@ -387,6 +486,8 @@ class Screen:
             self.menu_renderer.draw()
         elif self.state == 'IN_GAME':
             self.game_renderer.draw_board()
+            
+
             if self.show_help:
                 self.menu_renderer.draw_help_overlay()
         elif self.state == 'GAME_OVER':
