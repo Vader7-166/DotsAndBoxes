@@ -26,7 +26,7 @@ P2_COLOR = (255, 0, 150) # Neon Magenta
 P2_LIGHT_COLOR = (255, 180, 220)
 
 COMPLETED_EDGE_COLOR = (70, 90, 90) # Darker for better visibility
-LAST_MOVE_COLOR = (255, 255, 0) # Electric Yellow/Gold for last move
+LAST_MOVE_COLOR = (57, 255, 20) # Neon Green - visible but soft on eyes
 
 RECOIL_DURATION = 0.3 # seconds for the rubber band effect
 

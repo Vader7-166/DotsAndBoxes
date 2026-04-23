@@ -26,19 +26,19 @@ class AudioSettingsUI:
         draw_text(screen, "AUDIO SETTINGS", WIDTH // 2, 100, self.screen_instance.title_font, DARK_TEAL)
         
         # Music Volume Slider
-        draw_text(screen, "Background Music", 150, self.music_y, self.screen_instance.label_font, DARK_TEAL, align="left")
+        draw_text(screen, "Music", 150, self.music_y, self.screen_instance.label_font, DARK_TEAL, align="left")
         music_handle_rect = pygame.Rect(self.slider_x + int(self.slider_w * self.audio_manager.bgm_volume) - 15, self.music_y - 15, 30, 30)
         self._draw_slider(self.slider_x, self.music_y, self.slider_w, self.audio_manager.bgm_volume, music_handle_rect.collidepoint(mouse_pos))
         draw_text(screen, f"{int(self.audio_manager.bgm_volume * 100)}%", self.slider_x + self.slider_w + 50, self.music_y, self.screen_instance.font, DARK_TEAL)
 
         # SFX Volume Slider
-        draw_text(screen, "Sound Effects", 150, self.sfx_y, self.screen_instance.label_font, DARK_TEAL, align="left")
+        draw_text(screen, "SFX", 150, self.sfx_y, self.screen_instance.label_font, DARK_TEAL, align="left")
         sfx_handle_rect = pygame.Rect(self.slider_x + int(self.slider_w * self.audio_manager.sfx_volume) - 15, self.sfx_y - 15, 30, 30)
         self._draw_slider(self.slider_x, self.sfx_y, self.slider_w, self.audio_manager.sfx_volume, sfx_handle_rect.collidepoint(mouse_pos))
         draw_text(screen, f"{int(self.audio_manager.sfx_volume * 100)}%", self.slider_x + self.slider_w + 50, self.sfx_y, self.screen_instance.font, DARK_TEAL)
 
         # Mute All Toggle
-        draw_text(screen, "Mute All", 150, self.mute_y, self.screen_instance.label_font, DARK_TEAL, align="left")
+        draw_text(screen, "Mute", 150, self.mute_y, self.screen_instance.label_font, DARK_TEAL, align="left")
         mute_rect = pygame.Rect(self.slider_x, self.mute_y - 25, 100, 50)
         mute_text = "ON" if self.audio_manager.is_muted else "OFF"
         draw_pill_button(screen, mute_text, mute_rect.x, mute_rect.y, mute_rect.w, mute_rect.h, self.screen_instance.font, self.audio_manager.is_muted, is_hovered=mute_rect.collidepoint(mouse_pos))

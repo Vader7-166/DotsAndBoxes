@@ -22,44 +22,58 @@ class MenuRenderer:
         spacing = 80
         icon_x = label_x + 10
 
+        # Blocking flags
+        any_dropdown = self.screen.show_dropdown or self.screen.show_diff_dropdown or self.screen.choosing_custom_row or self.screen.choosing_custom_col
+        
         # Players
+        is_p_hovered = (row_y - 40 <= mouse_pos[1] <= row_y + 40) and not any_dropdown
         draw_text(self.screen.screen, "Players", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        if is_p_hovered:
+            draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         pve_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 90, 60)
         pvp_rect = pygame.Rect(btn_start_x + 120, row_y - 30, 90, 60)
-        draw_pill_button(self.screen.screen, "PVE", pve_rect.x, pve_rect.y, pve_rect.w, pve_rect.h, self.screen.font, self.screen.mode == GameMode.PVE, is_hovered=pve_rect.collidepoint(mouse_pos))
-        draw_pill_button(self.screen.screen, "PVP", pvp_rect.x, pvp_rect.y, pvp_rect.w, pvp_rect.h, self.screen.font, self.screen.mode == GameMode.PVP, is_hovered=pvp_rect.collidepoint(mouse_pos))
+        pve_hover = pve_rect.collidepoint(mouse_pos) and not any_dropdown
+        pvp_hover = pvp_rect.collidepoint(mouse_pos) and not any_dropdown
+        draw_pill_button(self.screen.screen, "PVE", pve_rect.x, pve_rect.y, pve_rect.w, pve_rect.h, self.screen.font, self.screen.mode == GameMode.PVE, is_hovered=pve_hover)
+        draw_pill_button(self.screen.screen, "PVP", pvp_rect.x, pvp_rect.y, pvp_rect.w, pvp_rect.h, self.screen.font, self.screen.mode == GameMode.PVP, is_hovered=pvp_hover)
         
         # Difficulty
         row_y += spacing
+        is_diff_hovered = (row_y - 40 <= mouse_pos[1] <= row_y + 40) and not any_dropdown
         is_diff_disabled = (self.screen.mode == GameMode.PVP)
         diff_color = UI_DISABLED_GRAY if is_diff_disabled else DARK_TEAL
         draw_text(self.screen.screen, "Difficulty", label_x - 10, row_y, self.screen.label_font, diff_color, align="right")        
-        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        if is_diff_hovered:
+            draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         diff_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
         diff_bg = UI_DISABLED_GRAY if is_diff_disabled else RED
-        if not is_diff_disabled and diff_rect.collidepoint(mouse_pos):
+        if not is_diff_disabled and diff_rect.collidepoint(mouse_pos) and not any_dropdown:
             diff_bg = tuple(min(255, c + 30) for c in diff_bg)
         pygame.draw.rect(self.screen.screen, diff_bg, diff_rect, border_radius=20)
-        draw_text(self.screen.screen, self.screen.difficulty.capitalize(), diff_rect.centerx - 20, diff_rect.centery, self.screen.font, WHITE)
-        if "dropdown" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
+        draw_text(self.screen.screen, self.screen.difficulty.capitalize(), diff_rect.centerx - 15, diff_rect.centery, self.screen.font, WHITE)
+        # Professional Chevron
+        chevron_color = WHITE
+        cx, cy = diff_rect.right - 25, diff_rect.centery
+        pygame.draw.lines(self.screen.screen, chevron_color, False, [(cx-6, cy-3), (cx, cy+3), (cx+6, cy-3)], 2)
         
         #  Board
         row_y += spacing
+        is_board_hovered = (row_y - 40 <= mouse_pos[1] <= row_y + 40) and not any_dropdown
         draw_text(self.screen.screen, "Board Size", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        if is_board_hovered:
+            draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         board_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 190, 60)
         board_bg = RED
-        if board_rect.collidepoint(mouse_pos):
+        if board_rect.collidepoint(mouse_pos) and not any_dropdown:
             board_bg = tuple(min(255, c + 30) for c in board_bg)
         pygame.draw.rect(self.screen.screen, board_bg, board_rect, border_radius=20)
-        draw_text(self.screen.screen, self.screen.board_size_name, board_rect.centerx - 20, board_rect.centery, self.screen.font, WHITE)
-        if "dropdown" in self.screen.icons:
-            draw_icon(self.screen.screen, self.screen.icons["dropdown"], btn_start_x + 160 + 20 , row_y, center=True)
+        draw_text(self.screen.screen, self.screen.board_size_name, board_rect.centerx - 15, board_rect.centery, self.screen.font, WHITE)
+        # Professional Chevron
+        cx, cy = board_rect.right - 25, board_rect.centery
+        pygame.draw.lines(self.screen.screen, WHITE, False, [(cx-6, cy-3), (cx, cy+3), (cx+6, cy-3)], 2)
 
         # Custom Indicators
         if self.screen.board_size_name == "Custom":
@@ -68,11 +82,11 @@ class MenuRenderer:
             c_rect = pygame.Rect(btn_start_x + 300, row_y - 30, 60, 60)
             
             r_bg = RED
-            if r_rect.collidepoint(mouse_pos): r_bg = tuple(min(255, c + 30) for c in r_bg)
+            if r_rect.collidepoint(mouse_pos) and not any_dropdown: r_bg = tuple(min(255, c + 30) for c in r_bg)
             pygame.draw.circle(self.screen.screen, r_bg, r_rect.center, 30)
             
             c_bg = RED
-            if c_rect.collidepoint(mouse_pos): c_bg = tuple(min(255, c + 30) for c in c_bg)
+            if c_rect.collidepoint(mouse_pos) and not any_dropdown: c_bg = tuple(min(255, c + 30) for c in c_bg)
             pygame.draw.circle(self.screen.screen, c_bg, c_rect.center, 30)
             
             draw_text(self.screen.screen, str(rows), r_rect.centerx, r_rect.centery, self.screen.font, WHITE)
@@ -81,18 +95,22 @@ class MenuRenderer:
         
         # Quick Game
         row_y += spacing
+        is_q_hovered = (row_y - 40 <= mouse_pos[1] <= row_y + 40) and not any_dropdown
         draw_text(self.screen.screen, "Time Limit", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
-        draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
+        if is_q_hovered:
+            draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
         on_rect = pygame.Rect(btn_start_x + 20, row_y - 30, 90, 60)
         off_rect = pygame.Rect(btn_start_x + 120, row_y - 30, 90, 60)
-        draw_pill_button(self.screen.screen, "On", on_rect.x, on_rect.y, on_rect.w, on_rect.h, self.screen.font, self.screen.is_quickplay, is_hovered=on_rect.collidepoint(mouse_pos))
-        draw_pill_button(self.screen.screen, "Off", off_rect.x, off_rect.y, off_rect.w, off_rect.h, self.screen.font, not self.screen.is_quickplay, is_hovered=off_rect.collidepoint(mouse_pos))
+        on_hover = on_rect.collidepoint(mouse_pos) and not any_dropdown
+        off_hover = off_rect.collidepoint(mouse_pos) and not any_dropdown
+        draw_pill_button(self.screen.screen, "On", on_rect.x, on_rect.y, on_rect.w, on_rect.h, self.screen.font, self.screen.is_quickplay, is_hovered=on_hover)
+        draw_pill_button(self.screen.screen, "Off", off_rect.x, off_rect.y, off_rect.w, off_rect.h, self.screen.font, not self.screen.is_quickplay, is_hovered=off_hover)
         
         # SAVE Button
         save_btn_w, save_btn_h = 240, 100
         save_rect = pygame.Rect(WIDTH//2 - save_btn_w//2, 660, save_btn_w, save_btn_h)
-        is_save_hovered = save_rect.collidepoint(mouse_pos)
+        is_save_hovered = save_rect.collidepoint(mouse_pos) and not any_dropdown
         
         shadow_offset = 10 if is_save_hovered else 6
         lift = -4 if is_save_hovered else 0
@@ -106,7 +124,7 @@ class MenuRenderer:
         
         # Help Button
         help_rect = pygame.Rect(WIDTH - 90, HEIGHT - 90, 60, 60)
-        is_help_hovered = help_rect.collidepoint(mouse_pos)
+        is_help_hovered = help_rect.collidepoint(mouse_pos) and not any_dropdown
         h_radius = 33 if is_help_hovered else 30
         h_bg = tuple(min(255, c + 30) for c in CYAN) if is_help_hovered else CYAN
         pygame.draw.circle(self.screen.screen, h_bg, help_rect.center, h_radius)
@@ -114,7 +132,7 @@ class MenuRenderer:
 
         # Speaker Button
         speaker_rect = pygame.Rect(30, HEIGHT - 90, 60, 60)
-        hover_speaker = speaker_rect.collidepoint(mouse_pos)
+        hover_speaker = speaker_rect.collidepoint(mouse_pos) and not any_dropdown
         draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on, hover_speaker)
 
         if self.screen.show_dropdown:
@@ -160,29 +178,61 @@ class MenuRenderer:
         mouse_pos = pygame.mouse.get_pos()
         options = ["Easy", "Medium", "Hard"]
         start_y = 430
-        btn_start_x = 310
+        btn_start_x = 310 + 20
+        
+        # Draw Card Background (Shadow + Panel)
+        total_h = len(options) * 60
+        card_rect = pygame.Rect(btn_start_x, start_y, 190, total_h)
+        
+        # Subtle Shadow
+        pygame.draw.rect(self.screen.screen, (20, 50, 50, 100), (card_rect.x + 5, card_rect.y + 5, card_rect.w, card_rect.h), border_radius=15)
+        # Main Card
+        pygame.draw.rect(self.screen.screen, WHITE, card_rect, border_radius=15)
+        pygame.draw.rect(self.screen.screen, RED, card_rect, 3, border_radius=15)
+        
         for i, opt in enumerate(options):
-            rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
-            bg = RED
-            if rect.collidepoint(mouse_pos): bg = tuple(min(255, c + 30) for c in bg)
-            pygame.draw.rect(self.screen.screen, bg, rect)
-            pygame.draw.line(self.screen.screen, WHITE, (btn_start_x + 20, rect.bottom), (btn_start_x + 210, rect.bottom), 1)
-            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, WHITE)
+            rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+            is_hover = rect.collidepoint(mouse_pos)
+            
+            if is_hover:
+                hover_bg = tuple(min(255, c + 220) for c in RED) # Very light red
+                pygame.draw.rect(self.screen.screen, hover_bg, rect, border_top_left_radius=15 if i==0 else 0, border_top_right_radius=15 if i==0 else 0, border_bottom_left_radius=15 if i==len(options)-1 else 0, border_bottom_right_radius=15 if i==len(options)-1 else 0)
+            
+            # Separator
+            if i < len(options) - 1:
+                pygame.draw.line(self.screen.screen, LIGHT_GRAY, (rect.left + 10, rect.bottom), (rect.right - 10, rect.bottom), 1)
+            
+            t_color = RED if is_hover else DARK_TEAL
+            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, t_color)
 
     # Dropdown của Board
     def draw_dropdown(self):
         mouse_pos = pygame.mouse.get_pos()
         options = ["Small", "Medium", "Large", "Custom"]
         start_y = 500
-        btn_start_x = 310
+        btn_start_x = 310 + 20
+        
+        # Draw Card Background
+        total_h = len(options) * 60
+        card_rect = pygame.Rect(btn_start_x, start_y, 190, total_h)
+        
+        pygame.draw.rect(self.screen.screen, (20, 50, 50, 100), (card_rect.x + 5, card_rect.y + 5, card_rect.w, card_rect.h), border_radius=15)
+        pygame.draw.rect(self.screen.screen, WHITE, card_rect, border_radius=15)
+        pygame.draw.rect(self.screen.screen, RED, card_rect, 3, border_radius=15)
         
         for i, opt in enumerate(options):
-            rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
-            bg = RED
-            if rect.collidepoint(mouse_pos): bg = tuple(min(255, c + 30) for c in bg)
-            pygame.draw.rect(self.screen.screen, bg, rect)
-            pygame.draw.line(self.screen.screen, WHITE, (btn_start_x + 20, rect.bottom), (btn_start_x + 210, rect.bottom), 1)
-            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, WHITE)
+            rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+            is_hover = rect.collidepoint(mouse_pos)
+            
+            if is_hover:
+                hover_bg = tuple(min(255, c + 220) for c in RED)
+                pygame.draw.rect(self.screen.screen, hover_bg, rect, border_top_left_radius=15 if i==0 else 0, border_top_right_radius=15 if i==0 else 0, border_bottom_left_radius=15 if i==len(options)-1 else 0, border_bottom_right_radius=15 if i==len(options)-1 else 0)
+            
+            if i < len(options) - 1:
+                pygame.draw.line(self.screen.screen, LIGHT_GRAY, (rect.left + 10, rect.bottom), (rect.right - 10, rect.bottom), 1)
+                
+            t_color = RED if is_hover else DARK_TEAL
+            draw_text(self.screen.screen, opt, rect.centerx, rect.centery, self.screen.font, t_color)
     
     def draw_help_overlay(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))

@@ -273,7 +273,7 @@ class GameRenderer:
             text = "Draw Game!"
             color = DARK_TEAL
             
-        panel_w, panel_h = 550, 250
+        panel_w, panel_h = 560, 480 # Widened and heightened
         panel_rect = pygame.Rect(WIDTH//2 - panel_w//2, HEIGHT//2 - panel_h//2, panel_w, panel_h)
         
         # Outer Glow for Panel
