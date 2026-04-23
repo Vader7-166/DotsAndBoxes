@@ -83,9 +83,10 @@ class GameRenderer:
             for c in range(cols):
                 if board.h_edges[r][c]:
                     owner = board.h_edge_owners[r][c]
-                    color = P1_COLOR if owner == 1 else P2_COLOR
-                    # Highlight last move
+                    # Highlight last move with BLACK color
                     is_last = self.screen.last_move == ('h', r, c)
+                    #SET nét turn trước đó là màu Đen
+                    color = BLACK if is_last else (P1_COLOR if owner == 1 else P2_COLOR)
                     
                     s = self.screen.square_size
                     x1 = self.screen.margin_x + c * s
@@ -107,9 +108,9 @@ class GameRenderer:
             for c in range(cols + 1):
                 if board.v_edges[r][c]:
                     owner = board.v_edge_owners[r][c]
-                    color = P1_COLOR if owner == 1 else P2_COLOR
-                    # Highlight last move
+                    # Highlight last move with BLACK color
                     is_last = self.screen.last_move == ('v', r, c)
+                    color = (0, 0, 0) if is_last else (P1_COLOR if owner == 1 else P2_COLOR)
                     
                     s = self.screen.square_size
                     x = self.screen.margin_x + c * s
