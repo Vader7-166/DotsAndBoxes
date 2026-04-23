@@ -69,13 +69,13 @@ class GameRenderer:
             hover_color = P1_LIGHT_COLOR
             if d == 'h':
                 pygame.draw.line(self.screen.screen, hover_color,
-                    (self.screen.margin_x + c * self.screen.square_size + DOT_RADIUS, self.screen.margin_y + r * self.screen.square_size),
-                    (self.screen.margin_x + (c + 1) * self.screen.square_size - DOT_RADIUS, self.screen.margin_y + r * self.screen.square_size),
+                    (self.screen.margin_x + c * self.screen.square_size + self.screen.dot_radius, self.screen.margin_y + r * self.screen.square_size),
+                    (self.screen.margin_x + (c + 1) * self.screen.square_size - self.screen.dot_radius, self.screen.margin_y + r * self.screen.square_size),
                     HOVER_EDGE_WIDTH)
             else:
                 pygame.draw.line(self.screen.screen, hover_color,
-                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size + DOT_RADIUS),
-                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size - DOT_RADIUS),
+                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + r * self.screen.square_size + self.screen.dot_radius),
+                    (self.screen.margin_x + c * self.screen.square_size, self.screen.margin_y + (r + 1) * self.screen.square_size - self.screen.dot_radius),
                     HOVER_EDGE_WIDTH)
 
         # Edges
@@ -95,7 +95,7 @@ class GameRenderer:
                     # Bone shape parameters
                     flare = 20 if is_last else 18
                     mid = 17 if is_last else 15
-                    gap = DOT_RADIUS - 2
+                    gap = self.screen.dot_radius - 2
                     
                     points = [
                         (x1 + gap, y - flare//2), (x1 + s//2, y - mid//2), (x2 - gap, y - flare//2),
@@ -139,21 +139,42 @@ class GameRenderer:
         # Navigation Bar
         nav_center_x = WIDTH // 2
         nav_y = HEIGHT - 60
+        mouse_pos = pygame.mouse.get_pos()
         
         # Home button
-        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x - 55, nav_y), 42)
-        draw_icon(self.screen.screen, self.screen.icons["home"], nav_center_x - 55, nav_y, center=True)
+        home_pos = (nav_center_x - 55, nav_y)
+        home_rect = pygame.Rect(home_pos[0] - 42, home_pos[1] - 42, 84, 84)
+        is_home_hovered = home_rect.collidepoint(mouse_pos)
+        h_radius = 45 if is_home_hovered else 42
+        # h_color = tuple(min(255, c + 30) for c in CYAN) if is_home_hovered else CYAN
+        
+        pygame.draw.circle(self.screen.screen, CYAN, home_pos, h_radius)
+        draw_icon(self.screen.screen, self.screen.icons["home"], home_pos[0], home_pos[1], center=True)
         
         # Restart button
-        pygame.draw.circle(self.screen.screen, CYAN, (nav_center_x + 55, nav_y), 42)
-        draw_icon(self.screen.screen, self.screen.icons["restart"], nav_center_x + 55, nav_y, center=True)
+        restart_pos = (nav_center_x + 55, nav_y)
+        restart_rect = pygame.Rect(restart_pos[0] - 42, restart_pos[1] - 42, 84, 84)
+        is_restart_hovered = restart_rect.collidepoint(mouse_pos)
+        r_radius = 45 if is_restart_hovered else 42
+        # r_color = tuple(min(255, c + 30) for c in CYAN) if is_restart_hovered else CYAN
+        
+        pygame.draw.circle(self.screen.screen, CYAN, restart_pos, r_radius)
+        draw_icon(self.screen.screen, self.screen.icons["restart"], restart_pos[0], restart_pos[1], center=True)
         
         # Help button
-        pygame.draw.circle(self.screen.screen, CYAN, (WIDTH - 60, nav_y), 30)
-        draw_text(self.screen.screen, "?", WIDTH - 60, nav_y, self.screen.font, WHITE)
+        help_pos = (WIDTH - 60, nav_y)
+        help_rect = pygame.Rect(help_pos[0] - 30, help_pos[1] - 30, 60, 60)
+        is_help_hovered = help_rect.collidepoint(mouse_pos)
+        hp_radius = 33 if is_help_hovered else 30
+        hp_color = tuple(min(255, c + 30) for c in CYAN) if is_help_hovered else CYAN
+        
+        pygame.draw.circle(self.screen.screen, hp_color, help_pos, hp_radius)
+        draw_text(self.screen.screen, "?", help_pos[0], help_pos[1], self.screen.font, WHITE)
 
         # Speaker button (Bottom Left)
-        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on)
+        speaker_rect = pygame.Rect(30, HEIGHT - 90, 60, 60)
+        hover_speaker = speaker_rect.collidepoint(mouse_pos)
+        draw_speaker(self.screen.screen, 60, HEIGHT - 60, self.screen.sound_on, hover_speaker)
 
     def draw_game_over(self):
         overlay = pygame.Surface((WIDTH, HEIGHT))

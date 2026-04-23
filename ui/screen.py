@@ -45,6 +45,10 @@ class Screen:
         
         self.show_dropdown = False
         self.show_diff_dropdown = False
+        #Custom Board
+        self.choosing_custom_row = False
+        self.choosing_custom_col = False
+
         self.show_help = False
         
         self.margin_x = 0
@@ -54,7 +58,7 @@ class Screen:
         self.mouse_pos = (0, 0)
         self.last_move = None
         self.hovered_edge = None
-        self.show_help = False
+        self.dot_radius = DOT_RADIUS
         
         # Audio
         self.audio_manager = AudioManager()
@@ -201,18 +205,40 @@ class Screen:
     def _handle_menu_click(self, x, y):
         # Handle Board Dropdown options
         if self.show_dropdown:
-            options = ["Small", "Medium", "Large"]
+            options = ["Small", "Medium", "Large", "Custom"] # Thêm Custom vào danh sách
             btn_start_x = 310
-            start_y = 510
+            start_y = 500 # Đồng bộ với MenuRenderer
             for i, opt in enumerate(options):
-                rect = pygame.Rect(btn_start_x, start_y + i * 60, 190, 60)
+                # Thêm + 20 để khớp với tọa độ vẽ
+                rect = pygame.Rect(btn_start_x + 20, start_y + i * 60, 190, 60)
                 if rect.collidepoint(x, y):
                     if opt == "Small": self.board_size = (3, 3)
                     elif opt == "Medium": self.board_size = (5, 5)
                     elif opt == "Large": self.board_size = (7, 7)
+                    elif opt == "Custom": self.board_size = (10, 10)
                     self.show_dropdown = False
                     return
             self.show_dropdown = False 
+            return
+
+        # Handle Custom Number Picker
+        if self.choosing_custom_row or self.choosing_custom_col:
+            picker_x = WIDTH // 2 - 150
+            picker_y = HEIGHT // 2 - 150
+            for i in range(19): # Numbers 2 to 20
+                num = i + 2
+                row, col = i // 5, i % 5
+                btn_size = 60
+                btn_rect = pygame.Rect(picker_x + col * btn_size, picker_y + row * btn_size, btn_size, btn_size)
+                if btn_rect.collidepoint(x, y):
+                    r, c = self.board_size
+                    if self.choosing_custom_row: self.board_size = (num, c)
+                    else: self.board_size = (r, num)
+                    self.choosing_custom_row = False
+                    self.choosing_custom_col = False
+                    return
+            self.choosing_custom_row = False
+            self.choosing_custom_col = False
             return
 
         # Handle Difficulty Dropdown options
@@ -269,6 +295,19 @@ class Screen:
             self.show_dropdown = not self.show_dropdown
             self.show_diff_dropdown = False # Close other dropdown
             return
+
+        # Custom Size Inputs Click Detection
+        if self.board_size_name == "Custom":
+            r_rect = pygame.Rect(btn_start_x + 220, row_y - 30, 60, 60)
+            c_rect = pygame.Rect(btn_start_x + 300, row_y - 30, 60, 60)
+            if r_rect.collidepoint(x, y):
+                self.choosing_custom_row = True
+                self.choosing_custom_col = False
+                return
+            if c_rect.collidepoint(x, y):
+                self.choosing_custom_col = True
+                self.choosing_custom_row = False
+                return
 
         # Quick Game
         row_y += spacing

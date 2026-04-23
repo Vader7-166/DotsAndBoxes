@@ -18,31 +18,47 @@ class AudioSettingsUI:
 
     def draw(self):
         screen = self.screen_instance.screen
+        mouse_pos = pygame.mouse.get_pos()
         
         # Title
         draw_text(screen, "AUDIO SETTINGS", WIDTH // 2, 100, self.screen_instance.title_font, DARK_TEAL)
         
         # Music Volume Slider
         draw_text(screen, "Music", 150, self.music_y, self.screen_instance.label_font, DARK_TEAL, align="left")
-        self._draw_slider(self.slider_x, self.music_y, self.slider_w, self.audio_manager.bgm_volume)
+        music_handle_rect = pygame.Rect(self.slider_x + int(self.slider_w * self.audio_manager.bgm_volume) - 15, self.music_y - 15, 30, 30)
+        self._draw_slider(self.slider_x, self.music_y, self.slider_w, self.audio_manager.bgm_volume, music_handle_rect.collidepoint(mouse_pos))
         draw_text(screen, f"{int(self.audio_manager.bgm_volume * 100)}%", self.slider_x + self.slider_w + 50, self.music_y, self.screen_instance.font, DARK_TEAL)
 
         # SFX Volume Slider
         draw_text(screen, "SFX", 150, self.sfx_y, self.screen_instance.label_font, DARK_TEAL, align="left")
-        self._draw_slider(self.slider_x, self.sfx_y, self.slider_w, self.audio_manager.sfx_volume)
+        sfx_handle_rect = pygame.Rect(self.slider_x + int(self.slider_w * self.audio_manager.sfx_volume) - 15, self.sfx_y - 15, 30, 30)
+        self._draw_slider(self.slider_x, self.sfx_y, self.slider_w, self.audio_manager.sfx_volume, sfx_handle_rect.collidepoint(mouse_pos))
         draw_text(screen, f"{int(self.audio_manager.sfx_volume * 100)}%", self.slider_x + self.slider_w + 50, self.sfx_y, self.screen_instance.font, DARK_TEAL)
 
         # Mute All Toggle
         draw_text(screen, "Mute All", 150, self.mute_y, self.screen_instance.label_font, DARK_TEAL, align="left")
+        mute_rect = pygame.Rect(self.slider_x, self.mute_y - 25, 100, 50)
         mute_text = "ON" if self.audio_manager.is_muted else "OFF"
-        draw_pill_button(screen, mute_text, self.slider_x, self.mute_y - 25, 100, 50, self.screen_instance.font, self.audio_manager.is_muted)
+        draw_pill_button(screen, mute_text, mute_rect.x, mute_rect.y, mute_rect.w, mute_rect.h, self.screen_instance.font, self.audio_manager.is_muted, is_hovered=mute_rect.collidepoint(mouse_pos))
 
-        # Back Button
-        back_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT - 100, 200, 60)
-        pygame.draw.rect(screen, RED, back_rect, border_radius=20)
-        draw_text(screen, "BACK", WIDTH // 2, HEIGHT - 70, self.screen_instance.font, WHITE)
+        # Back Button (3D Hover Effect)
+        back_w, back_h = 240, 80
+        back_rect = pygame.Rect(WIDTH // 2 - back_w // 2, HEIGHT - 120, back_w, back_h)
+        is_back_hovered = back_rect.collidepoint(mouse_pos)
+        
+        shadow_offset = 8 if is_back_hovered else 6
+        lift = -2 if is_back_hovered else 0
+        
+        # Shadow
+        pygame.draw.rect(screen, DARK_TEAL, (back_rect.x, back_rect.y + shadow_offset, back_rect.w, back_rect.h), border_radius=25)
+        # Button
+        b_bg = tuple(min(255, c + 30) for c in RED) if is_back_hovered else RED
+        draw_back_rect = pygame.Rect(back_rect.x, back_rect.y + lift, back_rect.w, back_rect.h)
+        pygame.draw.rect(screen, b_bg, draw_back_rect, border_radius=25)
+        pygame.draw.rect(screen, WHITE, draw_back_rect, 2, border_radius=25)
+        draw_text(screen, "BACK", draw_back_rect.centerx, draw_back_rect.centery, self.screen_instance.font, WHITE)
 
-    def _draw_slider(self, x, y, w, volume):
+    def _draw_slider(self, x, y, w, volume, is_hovered=False):
         screen = self.screen_instance.screen
         # Track
         pygame.draw.rect(screen, GRAY, (x, y - 5, w, 10), border_radius=5)
@@ -50,15 +66,18 @@ class AudioSettingsUI:
         pygame.draw.rect(screen, CYAN, (x, y - 5, int(w * volume), 10), border_radius=5)
         # Handle
         handle_x = x + int(w * volume)
-        pygame.draw.circle(screen, WHITE, (handle_x, y), 15)
-        pygame.draw.circle(screen, DARK_TEAL, (handle_x, y), 15, 2)
+        radius = 18 if is_hovered else 15
+        h_color = tuple(min(255, c + 40) for c in CYAN) if is_hovered else WHITE
+        
+        pygame.draw.circle(screen, h_color, (handle_x, y), radius)
+        pygame.draw.circle(screen, DARK_TEAL, (handle_x, y), radius, 2)
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
             
-            # Back Button
-            if WIDTH // 2 - 100 <= x <= WIDTH // 2 + 100 and HEIGHT - 100 <= y <= HEIGHT - 40:
+            # Back Button (Matches 240x80 design)
+            if WIDTH // 2 - 120 <= x <= WIDTH // 2 + 120 and HEIGHT - 120 <= y <= HEIGHT - 40:
                 self.screen_instance.state = self.screen_instance.previous_state
                 return True
                 
