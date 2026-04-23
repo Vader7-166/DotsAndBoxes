@@ -31,5 +31,6 @@ LAST_MOVE_COLOR = (57, 255, 20) # Neon Green - visible but soft on eyes
 RECOIL_DURATION = 0.3 # seconds for the rubber band effect
 
 # Audio Defaults
-DEFAULT_VOLUME = 0.5
+DEFAULT_BGM_VOLUME = 0.5
+DEFAULT_SFX_VOLUME = 0.5
 MUTE_DEFAULT = False

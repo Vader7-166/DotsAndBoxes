@@ -1,6 +1,6 @@
 import pygame
 import os
-from constants import DEFAULT_VOLUME, MUTE_DEFAULT
+from constants import DEFAULT_BGM_VOLUME, DEFAULT_SFX_VOLUME, MUTE_DEFAULT
 
 class AudioManager:
     def __init__(self):
@@ -14,8 +14,8 @@ class AudioManager:
         except pygame.error as e:
             print(f"Critial Error: Could not initialize mixer: {e}")
             
-        self.bgm_volume = DEFAULT_VOLUME
-        self.sfx_volume = DEFAULT_VOLUME
+        self.bgm_volume = DEFAULT_BGM_VOLUME
+        self.sfx_volume = DEFAULT_SFX_VOLUME
         self.is_muted = MUTE_DEFAULT
         
         self.sfx = {}

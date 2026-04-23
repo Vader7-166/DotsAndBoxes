@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+import threading
 from constants import *
 from logic.game_engine import GameEngine, GameState, GameMode
 from ai.bot import AIBot
@@ -66,6 +67,10 @@ class Screen:
         self.is_recoiling = False
         self.recoil_data = None # {start_vec, end_vec, start_time}
         
+        # AI Threading
+        self.bot_thinking = False
+        self.bot_move_thread = None
+        
         # Audio
         self.audio_manager = AudioManager()
         self.audio_manager.play_bgm()
@@ -121,6 +126,7 @@ class Screen:
             
         self.engine.start_game()
         self.state = 'IN_GAME'
+        self.audio_manager.set_bgm_volume(0.0) # Tắt nhạc khi bắt đầu chơi
         
         available_width = WIDTH - 100
         available_height = HEIGHT - 260
@@ -251,6 +257,7 @@ class Screen:
                     # Home button
                     elif (x - (nav_center_x - 55))**2 + (y - nav_y)**2 <= 42**2:
                         self.state = 'START_SCREEN'
+                        self.audio_manager.set_bgm_volume(DEFAULT_BGM_VOLUME) # Bật lại nhạc khi về màn hình chính
                         return
                     # Restart button
                     elif (x - (nav_center_x + 55))**2 + (y - nav_y)**2 <= 42**2:
@@ -281,6 +288,7 @@ class Screen:
                 # Game over screen
                 elif self.state == 'GAME_OVER':
                     self.state = 'START_SCREEN'
+                    self.audio_manager.set_bgm_volume(DEFAULT_BGM_VOLUME) # Bật lại nhạc khi thoát màn hình kết thúc
 
     def _handle_menu_click(self, x, y):
         # Handle Board Dropdown options
@@ -421,25 +429,34 @@ class Screen:
 
         if self.state == 'IN_GAME':
             self.engine.update()
+            
+            # Bot Turn Handling (Threaded)
+            if self.engine.state == GameState.IN_GAME and self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and not self.bot_thinking:
+                self.bot_thinking = True
+                def run_bot():
+                    time.sleep(0.5)
+                    move = self.bot.get_move(self.engine.board)
+                    score = self.engine.make_move(move)
+                    if score is not None:
+                        if score > 0:
+                            self.audio_manager.play_sfx('score')
+                        else:
+                            self.audio_manager.play_sfx('move')
+                    self.last_move = move
+                    self.bot_thinking = False
+                
+                self.bot_move_thread = threading.Thread(target=run_bot, daemon=True)
+                self.bot_move_thread.start()
+
             if self.engine.state in [GameState.PLAYER_1_WIN, GameState.PLAYER_2_WIN, GameState.DRAW]:
                 self.state = 'GAME_OVER'
-                # Play outcome sound: Player 1 is always the human
+                # Stop music or keep it off
+                self.audio_manager.set_bgm_volume(0.0)
                 if self.engine.state == GameState.PLAYER_1_WIN:
                     self.audio_manager.play_sfx('winner')
                 else:
                     self.audio_manager.play_sfx('gameover')
                 return
-            if self.engine.mode == GameMode.PVE and self.engine.current_player == 2 and self.engine.state == GameState.IN_GAME:
-                pygame.time.delay(600)
-                move = self.bot.get_move(self.engine.board)
-                if move:
-                    score = self.engine.make_move(move)
-                    if score is not None:
-                        self.last_move = move
-                        if score > 0:
-                            self.audio_manager.play_sfx('score')
-                        else:
-                            self.audio_manager.play_sfx('move')
 
     def _get_move_from_mouse(self, x, y):
         rows, cols = self.board_size

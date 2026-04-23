@@ -96,7 +96,7 @@ class MenuRenderer:
         # Quick Game
         row_y += spacing
         is_q_hovered = (row_y - 40 <= mouse_pos[1] <= row_y + 40) and not any_dropdown
-        draw_text(self.screen.screen, "Time Limit", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
+        draw_text(self.screen.screen, "Quick Play", label_x - 10, row_y, self.screen.label_font, DARK_TEAL, align="right")
         if is_q_hovered:
             draw_icon(self.screen.screen, self.screen.icons["arrow"], icon_x - 15, row_y - 16, center=False)
         
